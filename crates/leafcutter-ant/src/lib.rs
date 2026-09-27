@@ -11,6 +11,10 @@
 // arrives in a later commit; each `expect` turns into a warning once every
 // item in its module has a caller.
 #[cfg_attr(not(test), expect(dead_code))]
+pub mod console;
+#[cfg_attr(not(test), expect(dead_code))]
+pub mod fs;
+#[cfg_attr(not(test), expect(dead_code))]
 mod glob;
 #[cfg_attr(not(test), expect(dead_code))]
 mod js;

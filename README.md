@@ -63,6 +63,16 @@ npm run vectors
 Unicode 10 tables for unquoted keys, and they are copied out of json5 rather
 than taken from a newer Unicode release.
 
+The host owns the disk and the terminal. leafcutter-ant reads a project and
+writes its output through the `fs::FileSystem` trait, a port of TS Dash's
+`FileSystem`, and reports through a `console::Console` the host supplies. The
+trait is async: its methods return boxed futures that are not `Send`, and
+the library picks no executor, so the CLI can block on them, the desktop app
+can run them on a single-threaded runtime, and a browser host can back them
+with a page's async file APIs. `fs::NativeFileSystem` is the local disk. It
+lists directories sorted by name, writes through a temporary file that is
+renamed over the target, and blocks the thread that polls it.
+
 ## Quick start
 
 ```sh
@@ -93,8 +103,10 @@ its version and help; the `build` command comes with the compiler pipeline.
 
 ## Quirk ledger
 
-Behaviour kept from TS Dash because projects can observe it. Each row is
-pinned by a test and stays until parity has shipped.
+Behaviour kept from TS Dash because projects can observe it, bugs included.
+Each row is pinned by a test that cites the TS source. None is fixed before
+parity has shipped; after that, each fix lands as its own commit on a
+separate branch, and this table is that branch's checklist.
 
 | Quirk | What TS Dash does | Pinned by |
 | --- | --- | --- |
@@ -113,6 +125,7 @@ Where leafcutter-ant differs from TS Dash, and why:
 | U+2028 or U+2029 inside a json5 string | json5 prints a warning to the console | reads it silently | a library does not print |
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
 | File or pack definitions that are not an array of objects with a string `id` | takes them and fails later, where a plugin asks for a file type | refused when the host builds `FileTypes` or `PackTypes` | the definitions come from the host, which can report them at startup |
+| The order of a directory listing | the operating system's, through Deno's `readDir` | sorted by the bytes of each name | the listing order becomes the order of contents lists and of the cache file, and must not change from one machine to the next |
 | pathe's `resolve` and `relative` on a path that climbs above the working directory | resolved against `process.cwd()` in the Deno CLI and against `/` in the editor | resolved against `/` | the result then depends on no process state; relative paths that stay below the working directory give the same answer either way |
 
 ## Tasks

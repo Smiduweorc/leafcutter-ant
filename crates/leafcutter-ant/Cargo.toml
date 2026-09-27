@@ -19,6 +19,9 @@ indexmap = "2.14"
 ryu-js = "1.0.3"
 
 [dev-dependencies]
+# Runs the file system's futures to completion in tests; the library itself
+# picks no executor.
+futures-executor = "0.3"
 # Reads the golden vectors. preserve_order keeps keys in source order and
 # float_roundtrip parses numbers correctly rounded, as JSON.parse does.
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
