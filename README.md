@@ -177,6 +177,7 @@ one of them, change it in black-garden-ants first, then copy it here.
 | `scripts/tasks.sh` | What every task means. Edit the Rust part to change behaviour. |
 | `scripts/check-shared.sh` | The black-garden-ants comparison |
 | `release.sh`, `cliff.toml`, `lefthook.yml`, `scripts/commit-msg.sh` | Shared release flow, changelog rules, hooks and commit check |
+| `LICENSE` | Dash's MIT licence, which leafcutter-ant is released under |
 | `NOTICE.md` | The licence notice for json5, whose parser is ported here |
 
 ## Lints
@@ -201,5 +202,5 @@ decides what to show.
 
 ## Licence
 
-ISC, as set in `Cargo.toml`. `NOTICE.md` holds json5's MIT notice for its
-ported parser.
+MIT: Dash's licence, in `LICENSE`, since leafcutter-ant is a port of it.
+`NOTICE.md` holds json5's notice for its ported parser.
