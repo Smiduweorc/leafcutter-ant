@@ -30,6 +30,12 @@ ryu-js = "1.0.3"
 # `cargo update` move them.
 swc = "=0.278.1"
 swc_common = "0.34"
+# The syntax tree js-runtime's import/export rewrite walks, and the parser
+# options that pick JavaScript or TypeScript; the versions swc 0.278.1
+# locks. anyhow is the error type swc's handler API is written in.
+swc_ecma_ast = "0.115"
+swc_ecma_parser = "0.146"
+anyhow = "1"
 # swc's options are built from the same JSON the plugin hands @swc/wasm-web;
 # swc depends on serde_json already.
 serde_json = "1.0.115"

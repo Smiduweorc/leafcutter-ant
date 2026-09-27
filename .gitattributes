@@ -6,3 +6,4 @@
 # included.
 /crates/leafcutter-ant/tests/corpus/** -text
 /tools/parity/typescript/** -text
+/tools/parity/runtime/** -text

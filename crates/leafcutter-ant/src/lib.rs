@@ -20,6 +20,7 @@ mod plugins;
 pub mod project;
 #[cfg(test)]
 mod testing;
+mod wasm_web;
 
 pub use dash::{Dash, DashError, DashOptions};
 pub use plugin::{BuildType, Mode};

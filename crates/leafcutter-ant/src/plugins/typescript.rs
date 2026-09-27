@@ -3,16 +3,11 @@
 //! here from the same swc release. Declaration files (`.d.ts`) are left out
 //! of the output.
 
-use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::sync::Arc;
-
-use swc_common::errors::ColorConfig;
-use swc_common::{FileName, GLOBALS, Globals, SourceMap};
-
 use crate::fs;
 use crate::json::Value;
 use crate::pathe;
 use crate::plugin::{Context, Data, FileHandle, Finalized, Hook, Options, PathChange, Plugin};
+use crate::wasm_web;
 
 pub(crate) struct TypeScript {
 	inline_source_map: bool,
@@ -26,14 +21,8 @@ impl TypeScript {
 	}
 }
 
-/// `transformSync(source, options).code` with the options the plugin passes
-/// (`filename` is the file's base name, `swcrc` stays off as it is in the
-/// browser build, and the working directory, which nothing reads, is fixed
-/// so swc does not ask the process for one). An error is swc's message.
-///
-/// swc panics on a few inputs; in the browser build a panic is thrown as an
-/// error, which the plugin host catches, so here it is caught as one. The
-/// process's panic hook still sees it.
+/// `transformSync(source, options).code` with the options the plugin passes;
+/// `filename` is the file's base name. An error is swc's message.
 pub(crate) fn transform(
 	source: &str,
 	filename: &str,
@@ -41,8 +30,6 @@ pub(crate) fn transform(
 ) -> Result<String, String> {
 	let mut options = serde_json::json!({
 		"filename": filename,
-		"swcrc": false,
-		"cwd": "/",
 		"jsc": {
 			"parser": { "syntax": "typescript" },
 			"preserveAllComments": false,
@@ -53,34 +40,7 @@ pub(crate) fn transform(
 	if inline_source_map {
 		options["sourceMaps"] = "inline".into();
 	}
-	let options: swc::config::Options =
-		serde_json::from_value(options).map_err(|e| e.to_string())?;
-	let run = || {
-		let cm: Arc<SourceMap> = Arc::default();
-		let compiler = swc::Compiler::new(Arc::clone(&cm));
-		GLOBALS.set(&Globals::new(), || {
-			swc::try_with_handler(
-				Arc::clone(&cm),
-				swc::HandlerOpts {
-					color: ColorConfig::Never,
-					skip_filename: false,
-				},
-				|handler| {
-					let name = if filename.is_empty() {
-						FileName::Anon
-					} else {
-						FileName::Real(filename.into())
-					};
-					let file = cm.new_source_file(name, source.to_owned());
-					compiler.process_js_file(file, handler, &options)
-				},
-			)
-			.map(|output| output.code)
-			.map_err(|error| format!("{error:?}"))
-		})
-	};
-	catch_unwind(AssertUnwindSafe(run))
-		.unwrap_or_else(|_| Err("RuntimeError: unreachable".to_owned()))
+	wasm_web::transform(source, options)
 }
 
 impl Plugin for TypeScript {

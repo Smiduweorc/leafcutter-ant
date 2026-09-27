@@ -778,6 +778,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 name = "leafcutter-ant"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "futures-executor",
  "futures-util",
  "indexmap",
@@ -787,6 +788,8 @@ dependencies = [
  "serde_json",
  "swc",
  "swc_common",
+ "swc_ecma_ast",
+ "swc_ecma_parser",
 ]
 
 [[package]]

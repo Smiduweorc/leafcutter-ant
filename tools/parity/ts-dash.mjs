@@ -93,6 +93,22 @@ export class DefinedPackType extends PackType {
 	}
 }
 
+// The TypeScript source of the two modules the generatorScripts plugin
+// registers with the script loader, as Dash's bundle carries them (Vite's
+// `?raw` imports, with the CRLF line endings of the files Dash was built
+// from). Dash exports neither, so they are cut out of the bundle.
+const bundle = readFileSync(new URL(import.meta.resolve("@bridge-editor/dash-compiler")), "utf8")
+const rawModule = (variable) => {
+	const match = bundle.match(new RegExp(`^var ${variable} = ("(?:[^"\\\\]|\\\\.)*");$`, "m"))
+	if (!match) throw new Error(`${variable} is not in Dash's bundle`)
+	// A JavaScript string literal with raw tabs in it, which JSON refuses.
+	return new Function(`return ${match[1]}`)()
+}
+export const dashModuleSources = {
+	"@bridge/generate": rawModule("GeneratorScriptModule"),
+	"@bridge-interal/collection": rawModule("CollectionModule"),
+}
+
 export class QuietConsole extends Console {
 	log() {}
 	error() {}

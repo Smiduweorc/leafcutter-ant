@@ -5,6 +5,9 @@
 
 use crate::json::Value;
 
+mod magic_string;
+pub(crate) mod transform;
+
 /// A value a property lookup can produce: a JSON value, `undefined`, or one
 /// of `Object.prototype`'s properties.
 #[derive(Clone, Copy, Debug)]

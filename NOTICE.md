@@ -12,6 +12,8 @@ given here.
 | `crates/leafcutter-ant/src/pathe.rs` | [pathe](https://github.com/unjs/pathe) 2.0.2 and 1.1.2 | Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev> |
 | `crates/leafcutter-ant/src/glob/picomatch.rs`, through the copy vendored in [@bridge-editor/common-utils](https://github.com/bridge-core/common-utils) 0.3.3 | [picomatch](https://github.com/micromatch/picomatch) | Copyright (c) 2017-present, Jon Schlinkert; common-utils: Copyright (c) 2021 bridge-team |
 | `is_glob` and `is_extglob` in `crates/leafcutter-ant/src/glob/mod.rs` | [is-glob](https://github.com/micromatch/is-glob) 4.0.3 and [is-extglob](https://github.com/micromatch/is-extglob) 2.1.1 | Copyright (c) 2014-2017, Jon Schlinkert; Copyright (c) 2014-2016, Jon Schlinkert |
+| `crates/leafcutter-ant/src/js/transform.rs` is a port of `Runtime.transformSource` and `Transform/main.ts` | [@bridge-editor/js-runtime](https://github.com/bridge-core/bridge-js-runtime) 0.4.5 | Copyright (c) 2022 bridge-team |
+| `crates/leafcutter-ant/src/js/magic_string.rs` is a port of `overwrite`, `slice` and `toString` | [magic-string](https://github.com/rich-harris/magic-string) 0.26.7 | Copyright 2018 Rich Harris |
 | `crates/leafcutter-ant/tests/data/fileDefinitions.json` and `packDefinitions.json`, unchanged | [bridge-core/editor-packages](https://github.com/bridge-core/editor-packages) at `10e360dc24194651b814994467ebdb8f0403c62e` | Copyright (c) 2021 bridge-team |
 
 ## MIT License

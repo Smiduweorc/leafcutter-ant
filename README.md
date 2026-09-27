@@ -54,6 +54,7 @@ loads, at the versions TS Dash's lockfile resolves, and Node through
 | `json5.json` | json5 2.2.1's `parse` of edge cases, random json5 and damaged json5: results and error messages |
 | `paths.json` | the functions of pathe 2.0.2 (which Dash imports) and pathe 1.1.2 (which mc-project-core imports) that each calls, on edge cases and random paths |
 | `typescript.json` | @swc/wasm-web 1.6.5 on the sources in `tools/parity/typescript/`, with the options Dash's `typeScript` plugin passes, with and without inline source maps |
+| `runtime.json` | js-runtime 0.4.5's `transformSource`, the rewrite that turns a script's `import` and `export` statements into calls its module loader understands, on the sources in `tools/parity/runtime/` and on the two modules Dash hands the loader as source text |
 | `globs.json` | the picomatch that common-utils vendors: the regex source it builds for every file definition matcher, the float fix's globs and random globs, whether V8 compiles that source, and `isMatch` on paths built to match and paths that should not |
 | `is-glob.json` | is-glob 4.0.3 on the same globs and on random strings |
 | `plugins.json` | TS Dash's own `entityIdentifierAlias` and `floatPropertyTruncationFix`, taken out of a real setup and called hook by hook, for input the non-JavaScript corpus cannot give them because no built-in there reads the files they look at |
