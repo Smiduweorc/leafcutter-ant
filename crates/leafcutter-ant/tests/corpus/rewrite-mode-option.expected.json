@@ -1,0 +1,45 @@
+{
+	"production": {
+		"written": {
+			"builds/7/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/7/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/7/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/7/Bridge BP/scripts/main.js": "console.warn(\"x\")\n"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/zombie.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/functions/tick.mcfunction\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/gametests/test.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/7/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/7/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/7/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/7/Bridge BP/scripts/main.js": "console.warn(\"x\")\n"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/7/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/7/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/7/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/7/Bridge BP/scripts/main.js": "console.warn(\"x\")\n"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/zombie.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/functions/tick.mcfunction\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/gametests/test.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"builds/7/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/7/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/7/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/7/Bridge BP/scripts/main.js": "console.warn(\"x\")\n"
+		}
+	}
+}

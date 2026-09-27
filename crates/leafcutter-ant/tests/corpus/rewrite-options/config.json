@@ -1,0 +1,23 @@
+{
+	"packs": {
+		"resourcePack": "./RP",
+		"behaviorPack": "./BP",
+		"skinPack": "./SP"
+	},
+	"compiler": {
+		"plugins": [
+			[
+				"simpleRewrite",
+				{
+					"buildName": "custom",
+					"packName": "My Pack",
+					"packNameSuffix": {
+						"behaviorPack": "BPx",
+						"resourcePack": null
+					},
+					"rewriteToComMojang": false
+				}
+			]
+		]
+	}
+}

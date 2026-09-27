@@ -51,7 +51,13 @@ loads, at the versions TS Dash's lockfile resolves, and Node through
 | `is-glob.json` | is-glob 4.0.3 on the same globs and on random strings |
 | `project.json` | mc-project-core 0.5.0 with the vendored definitions: pack roots and pack and file type detection for regular and malformed project configs, with picomatch as the matcher (as the Deno CLI sets it up) and with a matcher that never matches (as the editor does) |
 
-The Rust tests compare against every vector. CI records the vectors again and
+The Rust tests compare against every vector. `tools/parity/corpus.mjs` also
+builds each project under `crates/leafcutter-ant/tests/corpus/` with TS Dash
+itself, four ways (production and development, each with and without a
+separate output file system, as the Deno CLI's `--out` gives one), and
+records what every build wrote, removed and output in
+`<project>.expected.json`; `tests/corpus.rs` builds the same projects with
+leafcutter-ant and compares. CI records the vectors and the corpus again and
 fails if the committed copies differ, so the files cannot drift from what the
 JavaScript does. To record them yourself:
 
@@ -207,10 +213,11 @@ one of them, change it in black-garden-ants first, then copy it here.
 | --- | --- |
 | `crates/leafcutter-ant/` | The library: everything the compiler does |
 | `crates/leafcutter-ant/tests/vectors/` | Golden vectors recorded by `tools/parity` |
+| `crates/leafcutter-ant/tests/corpus/` | Small projects for the parity harness, each next to the output TS Dash gave for it |
 | `crates/leafcutter-ant/tests/data/` | `fileDefinitions.json` and `packDefinitions.json` from bridge-core/editor-packages at commit `10e360dc`, the data TS Dash fetches at run time |
 | `crates/leafcutter-ant-cli/` | The `leafcutter` binary: arguments in, library call, output out |
 | `assets/logo.png` | The logo, drawn by grml |
-| `tools/parity/` | The pinned JavaScript that records the vectors and json5's tables |
+| `tools/parity/` | The pinned JavaScript that records the vectors, json5's tables and the corpus output |
 | `Cargo.toml` | Workspace members, the shared version, and the lint levels |
 | `rust-toolchain.toml` | The pinned Rust release, with rustfmt and clippy |
 | `rustfmt.toml` | Tabs, and the edition rustfmt uses when the hook calls it directly |

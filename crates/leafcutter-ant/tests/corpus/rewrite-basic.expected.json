@@ -1,0 +1,67 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dist/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/dist/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dist/Bridge BP/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dist/Bridge RP/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/Bridge RP/texts/en_US.lang": "a=b\n",
+			"builds/dist/Bridge RP/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			}
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/zombie.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/functions/tick.mcfunction\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/gametests/test.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/texts/en_US.lang\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/blocks/stone.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dev/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dev/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/dev/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dev/Bridge BP/scripts/gametests/test.js": "export const x = 1\n",
+			"builds/dev/Bridge BP/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dev/Bridge RP/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dev/Bridge RP/texts/en_US.lang": "a=b\n",
+			"builds/dev/Bridge RP/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			}
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dist/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"builds/dist/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dist/Bridge BP/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dist/Bridge RP/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/Bridge RP/texts/en_US.lang": "a=b\n",
+			"builds/dist/Bridge RP/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			}
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/zombie.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/functions/tick.mcfunction\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/gametests/test.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/texts/en_US.lang\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/blocks/stone.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"development_behavior_packs/Bridge BP/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"development_behavior_packs/Bridge BP/functions/tick.mcfunction": "say hi\n",
+			"development_behavior_packs/Bridge BP/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"development_behavior_packs/Bridge BP/scripts/gametests/test.js": "export const x = 1\n",
+			"development_behavior_packs/Bridge BP/scripts/main.js": "console.warn(\"x\")\n",
+			"development_resource_packs/Bridge RP/manifest.json": "{\"format_version\": 2}\n",
+			"development_resource_packs/Bridge RP/texts/en_US.lang": "a=b\n",
+			"development_resource_packs/Bridge RP/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			}
+		}
+	}
+}

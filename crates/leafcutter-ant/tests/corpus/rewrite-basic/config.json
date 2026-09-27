@@ -1,0 +1,13 @@
+{
+	"name": "basic",
+	"namespace": "test",
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP"
+	},
+	"compiler": {
+		"plugins": [
+			"simpleRewrite"
+		]
+	}
+}

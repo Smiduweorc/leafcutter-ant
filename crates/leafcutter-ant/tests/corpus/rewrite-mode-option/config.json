@@ -1,0 +1,17 @@
+{
+	"packs": {
+		"behaviorPack": "./BP"
+	},
+	"compiler": {
+		"plugins": [
+			[
+				"simpleRewrite",
+				{
+					"mode": "production",
+					"buildName": 7,
+					"packName": ""
+				}
+			]
+		]
+	}
+}
