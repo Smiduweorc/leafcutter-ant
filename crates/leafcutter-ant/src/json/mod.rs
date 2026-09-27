@@ -211,6 +211,70 @@ impl fmt::Debug for Object {
 	}
 }
 
+// A derived clone would recurse once per level of nesting. This one keeps the
+// containers it is still filling on a stack of its own.
+impl Clone for Value {
+	fn clone(&self) -> Self {
+		/// A container being copied: the rest of its source, the copy so far,
+		/// and for an object the key the child being copied will go under.
+		enum Filling<'a> {
+			Array(std::slice::Iter<'a, Value>, Vec<Value>),
+			Object(Iter<'a>, Object, String),
+		}
+		fn start(value: &Value) -> Result<Filling<'_>, Value> {
+			match value {
+				Value::Array(array) => Ok(Filling::Array(
+					array.iter(),
+					Vec::with_capacity(array.len()),
+				)),
+				Value::Object(object) => {
+					Ok(Filling::Object(object.iter(), Object::new(), String::new()))
+				}
+				Value::Null => Err(Value::Null),
+				Value::Bool(b) => Err(Value::Bool(*b)),
+				Value::Number(n) => Err(Value::Number(*n)),
+				Value::String(s) => Err(Value::String(s.clone())),
+			}
+		}
+		let mut stack = match start(self) {
+			Ok(filling) => vec![filling],
+			Err(scalar) => return scalar,
+		};
+		loop {
+			let top = stack
+				.last_mut()
+				.expect("the stack holds the container being filled");
+			let next = match top {
+				Filling::Array(items, _) => items.next(),
+				Filling::Object(entries, _, key) => entries.next().map(|(k, v)| {
+					*key = k.to_owned();
+					v
+				}),
+			};
+			let done = match next {
+				Some(child) => match start(child) {
+					Ok(filling) => {
+						stack.push(filling);
+						continue;
+					}
+					Err(scalar) => scalar,
+				},
+				None => match stack.pop().expect("the stack is not empty") {
+					Filling::Array(_, items) => Value::Array(Array(items)),
+					Filling::Object(_, object, _) => Value::Object(object),
+				},
+			};
+			match stack.last_mut() {
+				None => return done,
+				Some(Filling::Array(_, items)) => items.push(done),
+				Some(Filling::Object(_, object, key)) => {
+					object.insert(std::mem::take(key), done);
+				}
+			}
+		}
+	}
+}
+
 // A derived drop would recurse once per level of nesting. Each container
 // instead moves its children into one flat list and drops them from there, so
 // the nested containers it reaches are already empty when they are dropped.
@@ -369,6 +433,45 @@ mod tests {
 		);
 		assert_eq!(format!("{:?}", Array::new()), "[]");
 		assert_eq!(format!("{:?}", Object::new()), "{}");
+	}
+
+	#[test]
+	fn a_clone_keeps_key_order_and_every_value() {
+		let value =
+			crate::json::parse_json5("{b: [1, {c: null, '2': true}], '1': 'x', a: {}, d: []}")
+				.expect("json5");
+		assert_eq!(
+			format!("{:?}", value.clone()),
+			r#"{"1":"x","b":[1,{"2":true,"c":null}],"a":{},"d":[]}"#
+		);
+		assert_eq!(format!("{:?}", Value::Number(f64::NAN).clone()), "NaN");
+	}
+
+	#[test]
+	fn a_million_levels_of_nesting_clone_without_overflowing_the_stack() {
+		let mut value = Value::Null;
+		for level in 0..1_000_000 {
+			value = if level % 2 == 0 {
+				Value::Array(Array::from(vec![value]))
+			} else {
+				let mut object = Object::new();
+				object.insert("k".to_owned(), value);
+				Value::Object(object)
+			};
+		}
+		let copy = value.clone();
+		drop(value);
+		let mut depth = 0;
+		let mut at = &copy;
+		loop {
+			at = match at {
+				Value::Array(items) => &items[0],
+				Value::Object(object) => object.get("k").expect("the key survives"),
+				_ => break,
+			};
+			depth += 1;
+		}
+		assert_eq!(depth, 1_000_000);
 	}
 
 	#[test]
