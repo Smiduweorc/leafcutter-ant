@@ -1,0 +1,77 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/behaviorPack/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dist/behaviorPack/functions/tick.mcfunction": "say hi\n",
+			"builds/dist/behaviorPack/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dist/behaviorPack/scripts/gametests/test.js": "export const x = 1\n",
+			"builds/dist/behaviorPack/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dist/resourcePack/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/resourcePack/texts/en_US.lang": "a=b\n",
+			"builds/dist/resourcePack/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			},
+			"builds/dist/skinPack/skins.json": "{\"skins\": []}\n"
+		},
+		"removed": [
+			"builds/dist/old.txt"
+		],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/zombie.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/functions/tick.mcfunction\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/gametests/test.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/texts/en_US.lang\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/blocks/stone.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"WT/db/CURRENT\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"WT/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"SP/skins.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dist/behaviorPack/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dist/behaviorPack/functions/tick.mcfunction": "say hi\n",
+			"builds/dist/behaviorPack/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dist/behaviorPack/scripts/gametests/test.js": "export const x = 1\n",
+			"builds/dist/behaviorPack/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dist/resourcePack/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/resourcePack/texts/en_US.lang": "a=b\n",
+			"builds/dist/resourcePack/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			},
+			"builds/dist/skinPack/skins.json": "{\"skins\": []}\n"
+		},
+		"removed": [
+			"builds/dist/old.txt"
+		],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/behaviorPack/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dist/behaviorPack/functions/tick.mcfunction": "say hi\n",
+			"builds/dist/behaviorPack/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dist/behaviorPack/scripts/gametests/test.js": "export const x = 1\n",
+			"builds/dist/behaviorPack/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dist/resourcePack/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/resourcePack/texts/en_US.lang": "a=b\n",
+			"builds/dist/resourcePack/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			},
+			"builds/dist/skinPack/skins.json": "{\"skins\": []}\n"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/zombie.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/functions/tick.mcfunction\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/gametests/test.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/texts/en_US.lang\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/blocks/stone.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"WT/db/CURRENT\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"WT/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"SP/skins.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"builds/dist/behaviorPack/entities/zombie.json": "{\n\t// a comment json5 allows\n\t\"format_version\": \"1.16.0\",\n\t\"minecraft:entity\": {\"description\": {\"identifier\": \"test:zombie\"}},\n}\n",
+			"builds/dist/behaviorPack/functions/tick.mcfunction": "say hi\n",
+			"builds/dist/behaviorPack/manifest.json": "{\n\t\"format_version\": 2,\n\t\"header\": {\"name\": \"BP\", \"uuid\": \"00000000-0000-0000-0000-000000000001\", \"version\": [1, 0, 0]}\n}\n",
+			"builds/dist/behaviorPack/scripts/gametests/test.js": "export const x = 1\n",
+			"builds/dist/behaviorPack/scripts/main.js": "console.warn(\"x\")\n",
+			"builds/dist/resourcePack/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/resourcePack/texts/en_US.lang": "a=b\n",
+			"builds/dist/resourcePack/textures/blocks/stone.png": {
+				"base64": "iVBORw0KGgoAAAAN//4AgA=="
+			},
+			"builds/dist/skinPack/skins.json": "{\"skins\": []}\n"
+		}
+	}
+}

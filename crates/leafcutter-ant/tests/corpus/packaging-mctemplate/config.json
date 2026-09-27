@@ -1,0 +1,19 @@
+{
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP",
+		"worldTemplate": "./WT",
+		"skinPack": "./SP"
+	},
+	"compiler": {
+		"plugins": [
+			[
+				"rewriteForPackaging",
+				{
+					"packName": "Pack Name",
+					"format": "mctemplate"
+				}
+			]
+		]
+	}
+}
