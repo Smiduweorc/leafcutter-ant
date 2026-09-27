@@ -110,8 +110,17 @@ fn greater_than_zero(length: &Value) -> bool {
 	match length {
 		Value::Number(n) => *n > 0.0,
 		Value::Bool(b) => *b,
-		Value::Null => false,
-		other => string_to_number(&to_js_string(other)).is_some_and(|n| n > 0.0),
+		other => to_number(other) > 0.0,
+	}
+}
+
+/// `Number(value)` for a JSON value.
+pub(crate) fn to_number(value: &Value) -> f64 {
+	match value {
+		Value::Number(n) => *n,
+		Value::Bool(b) => f64::from(u8::from(*b)),
+		Value::Null => 0.0,
+		other => string_to_number(&to_js_string(other)).unwrap_or(f64::NAN),
 	}
 }
 
@@ -248,6 +257,30 @@ pub(crate) fn for_in_keys(value: &Value) -> Vec<String> {
 	}
 }
 
+/// The keys `for (key in value)` visits, each with `value[key]`: a string
+/// gives its code units as one-character strings.
+pub(crate) fn for_in_entries(value: &Value) -> Vec<(String, Value)> {
+	match value {
+		Value::String(s) => s
+			.encode_utf16()
+			.enumerate()
+			.map(|(i, unit)| {
+				(
+					i.to_string(),
+					Value::String(String::from_utf16_lossy(&[unit])),
+				)
+			})
+			.collect(),
+		other => for_in_keys(other)
+			.into_iter()
+			.filter_map(|key| match own(other, &key) {
+				Prop::Value(found) => Some((key, found.clone())),
+				_ => None,
+			})
+			.collect(),
+	}
+}
+
 fn index(key: &str) -> Option<usize> {
 	let canonical =
 		key == "0" || (!key.starts_with('0') && key.bytes().all(|b| b.is_ascii_digit()));
@@ -330,5 +363,8 @@ mod tests {
 		assert_eq!(for_in_keys(&value("[5, 6]")), ["0", "1"]);
 		assert_eq!(for_in_keys(&value("'ab'")), ["0", "1"]);
 		assert!(for_in_keys(&value("5")).is_empty());
+		let entries = for_in_entries(&value("'ab'"));
+		assert_eq!(entries.len(), 2);
+		assert!(matches!(&entries[1], (key, Value::String(c)) if key == "1" && c == "b"));
 	}
 }

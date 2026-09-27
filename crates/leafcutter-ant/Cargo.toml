@@ -8,6 +8,9 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# join_all, to run file reads, copies and writes concurrently where TS Dash
+# uses Promise.all; the library picks no executor.
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 # ECMAScript regular expressions, to run the regex sources picomatch builds
 # with the semantics V8 gives them; utf16 matches over UTF-16 code units, as
 # RegExp#exec does outside unicode mode.

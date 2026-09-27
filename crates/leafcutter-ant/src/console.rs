@@ -38,6 +38,10 @@ impl Logger {
 		}
 	}
 
+	pub(crate) fn console(&self) -> &dyn Console {
+		&*self.console
+	}
+
 	pub(crate) fn time(&self, name: &str) {
 		if !self.verbose {
 			return;
@@ -126,11 +130,6 @@ impl Progress {
 		self.changed();
 	}
 
-	pub(crate) fn add_to_total(&self, amount: u32) {
-		self.total.set(self.total.get() + amount);
-		self.changed();
-	}
-
 	fn changed(&self) {
 		// A listener may add or remove listeners, so call a copy of the list.
 		let listeners: Vec<_> = self
@@ -208,7 +207,7 @@ pub(crate) mod tests {
 		progress.set_total(4);
 		progress.advance();
 		progress.remove_listener(first);
-		progress.add_to_total(4);
+		progress.advance();
 		assert_eq!(
 			*seen.borrow(),
 			[
@@ -216,7 +215,7 @@ pub(crate) mod tests {
 				("second", 0.0),
 				("first", 0.25),
 				("second", 0.25),
-				("second", 0.125)
+				("second", 0.5)
 			]
 		);
 	}

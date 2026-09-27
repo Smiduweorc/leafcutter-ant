@@ -63,6 +63,11 @@ impl ProjectConfig {
 		}
 	}
 
+	/// The config as it was read.
+	pub(crate) fn data(&self) -> &Value {
+		&self.data
+	}
+
 	/// `getRelativePackRoot`: `packs[packId] ?? defaultPackPaths[packId]`.
 	fn relative_pack_root(&self, pack_id: &str) -> Prop<'_> {
 		let own = self

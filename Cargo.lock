@@ -70,6 +70,7 @@ name = "leafcutter-ant"
 version = "0.0.0"
 dependencies = [
  "futures-executor",
+ "futures-util",
  "indexmap",
  "regress",
  "ryu-js",

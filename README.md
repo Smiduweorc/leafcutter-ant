@@ -12,13 +12,15 @@ something odd that a project can observe, leafcutter-ant does the same odd
 thing and lists it in the quirk ledger below. The plan, milestones and open
 questions are in `PRD-native-dash-compiler.md` next to this repository.
 
-It cannot build a project yet. The port goes from the leaves up, and so far
-holds the JSON layer the rest is built on: JSON values with JavaScript's
-property order, a port of the json5 2.2.1 reader Dash bundles, and a writer
-that matches V8's `JSON.stringify`, plus the path functions and glob matcher
-Dash uses. The library's runtime dependencies are `indexmap`, `ryu-js` and
-`regress`, each with its reason in `Cargo.toml`, and it does nothing until it
-is called.
+It cannot build a real project yet. The port goes from the leaves up. So far
+it holds the JSON layer (JSON values with JavaScript's property order, a port
+of the json5 2.2.1 reader Dash bundles, and a writer that matches V8's
+`JSON.stringify`), the path functions, glob matcher and project model Dash
+uses, and the compiler pipeline with its plugin host and cache file. The
+built-in plugins come next; plugins written in JavaScript need an embedded
+JavaScript runtime, which comes after them. The library's runtime
+dependencies are `indexmap`, `ryu-js`, `regress` and `futures-util`, each
+with its reason in `Cargo.toml`, and it does nothing until it is called.
 
 ## leafcutter-ant is not for you if you
 
@@ -115,6 +117,13 @@ separate branch, and this table is that branch's checklist.
 | `NaN` and `Infinity` are written as `null` | json5 reads them; `JSON.stringify` writes `null` | `nan_and_the_infinities_are_written_as_null` |
 | Error columns count UTF-16 units | json5 counts code units, and only `\n` starts a line | `the_position_is_the_column_after_the_offending_character`, `json5.json` |
 | An invalid escaped key character is reported 5 columns back | json5 subtracts 5 from the column | `an_escaped_key_character_that_cannot_be_in_a_key_reports_five_columns_back` |
+| A project config whose `compiler` is `null` stops the build | `isCompilerActivated` checks `compiler !== undefined`, then reads `compiler.plugins` and throws (`Dash.ts`) | `a_null_compiler_stops_the_build_as_the_type_error_does_in_ts_dash` |
+| A plugin list entry named like a property of `Object.prototype`, such as `constructor`, fails as an extension plugin | the extension plugin map is a plain object, so `plugins["constructor"]` finds the inherited function and Dash tries to run it as a module (`AllPlugins.ts`) | `plugin_list_entries_name_builtins_and_unknown_or_javascript_plugins_are_reported` |
+| A plugin that ignores a file drops every plugin with the same id from that file's hooks | `createImplementedHooksMap` filters by plugin id, and a plugin listed twice has one id (`DashFile.ts`) | `a_plugin_that_ignores_a_file_is_left_out_of_its_per_file_hooks_by_id` |
+| A `load` or `transform` chain that ends in `null` keeps the data it started with, even after a plugin replaced it | the chain's result goes through `?? file.data` (`LoadFiles.ts`, `TransformFiles.ts`) | `load_and_transform_chains_fall_back_to_the_start_when_they_end_in_null` |
+| Virtual files an `include` hook adds come before every pack file, in processing and in the cache file | `loadAll` adds `[path, { isVirtual }]` entries at once and the pack files afterwards (`IncludedFiles.ts`) | `included_virtual_files_come_first_and_included_paths_after_the_packs` |
+| A failed copy or write leaves the file out of the output with no message | `Promise.allSettled` over the copies and writes, results unread (`LoadFiles.ts`, `TransformFiles.ts`) | `failed_writes_and_copies_are_silent_as_in_ts_dash` |
+| A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 
 Where leafcutter-ant differs from TS Dash, and why:
 
@@ -125,6 +134,10 @@ Where leafcutter-ant differs from TS Dash, and why:
 | U+2028 or U+2029 inside a json5 string | json5 prints a warning to the console | reads it silently | a library does not print |
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
 | File or pack definitions that are not an array of objects with a string `id` | takes them and fails later, where a plugin asks for a file type | refused when the host builds `FileTypes` or `PackTypes` | the definitions come from the host, which can report them at startup |
+| The order `read`, `load` and `registerAliases` hooks see files in | the order the files' reads finish | build order, with the reads still running concurrently | output must not depend on timing; it shows where two files register one alias, and the later one in build order owns it |
+| Two files with the same output path | both writes run at once and either may land last | the later file in build order wins | the same |
+| A copied file and a written file with the same output path | the copy starts first and usually lands first | copies finish before any write starts, so the written file wins | the same |
+| Two extensions that declare the same compiler plugin id | the manifest read last wins | the manifest listed last wins | the same |
 | The order of a directory listing | the operating system's, through Deno's `readDir` | sorted by the bytes of each name | the listing order becomes the order of contents lists and of the cache file, and must not change from one machine to the next |
 | pathe's `resolve` and `relative` on a path that climbs above the working directory | resolved against `process.cwd()` in the Deno CLI and against `/` in the editor | resolved against `/` | the result then depends on no process state; relative paths that stay below the working directory give the same answer either way |
 
