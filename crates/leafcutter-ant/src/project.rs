@@ -175,6 +175,14 @@ impl PackTypes {
 		})
 	}
 
+	/// `getFromId(packId)`.
+	pub(crate) fn by_id(&self, id: &str) -> Option<&Value> {
+		self.definitions
+			.iter()
+			.find(|(definition_id, _)| definition_id == id)
+			.map(|(_, definition)| definition)
+	}
+
 	/// `get(filePath)`: the first pack in the config whose root the path
 	/// starts with decides, and a pack id without a definition gives no pack
 	/// even when a later pack would match.

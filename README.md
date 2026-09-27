@@ -123,6 +123,8 @@ separate branch, and this table is that branch's checklist.
 | A `load` or `transform` chain that ends in `null` keeps the data it started with, even after a plugin replaced it | the chain's result goes through `?? file.data` (`LoadFiles.ts`, `TransformFiles.ts`) | `load_and_transform_chains_fall_back_to_the_start_when_they_end_in_null` |
 | Virtual files an `include` hook adds come before every pack file, in processing and in the cache file | `loadAll` adds `[path, { isVirtual }]` entries at once and the pack files afterwards (`IncludedFiles.ts`) | `included_virtual_files_come_first_and_included_paths_after_the_packs` |
 | A failed copy or write leaves the file out of the output with no message | `Promise.allSettled` over the copies and writes, results unread (`LoadFiles.ts`, `TransformFiles.ts`) | `failed_writes_and_copies_are_silent_as_in_ts_dash` |
+| A plugin option named `mode` or `buildType` replaces the live value, for that plugin only | the options object is `{ get mode(), get buildType(), ...pluginOpts }`, so the spread overwrites the getters (`AllPlugins.ts`) | `a_plugin_option_named_mode_replaces_the_build_mode_for_that_plugin` |
+| `simpleRewrite` clears the default pack folder before a build, never the one `packNameSuffix` names, so output under a suffix piles up | `buildStart` unlinks `<packName> <defaultPackPath>` (`SimpleRewrite.ts`) | `a_full_build_clears_the_default_pack_folder_but_not_a_suffixed_one` |
 | A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 
 Where leafcutter-ant differs from TS Dash, and why:

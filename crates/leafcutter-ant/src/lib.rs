@@ -25,6 +25,8 @@ mod plugin;
 mod plugins;
 #[expect(dead_code)]
 pub mod project;
+#[cfg(test)]
+mod testing;
 
 pub use dash::{Dash, DashError, DashOptions};
 pub use plugin::{BuildType, Mode};
