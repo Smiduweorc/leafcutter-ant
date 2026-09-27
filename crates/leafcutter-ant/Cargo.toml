@@ -33,6 +33,14 @@ swc_common = "0.34"
 # swc's options are built from the same JSON the plugin hands @swc/wasm-web;
 # swc depends on serde_json already.
 serde_json = "1.0.115"
+# QuickJS, the engine user scripts and extension plugins run in: generator
+# scripts, custom commands and compiler plugins from extensions are
+# JavaScript modules. It builds to WebAssembly and embeds without a V8
+# download. Its JSON.stringify and Number#toString match V8's on every golden
+# vector (tests/vectors.rs), so scripts that stringify their own output write
+# the bytes TS Dash writes. Default features only: the module loader, the
+# futures integration and classes are built here, on top of plain functions.
+rquickjs = "0.14.0"
 
 [dev-dependencies]
 # Runs the file system's futures to completion in tests; the library itself

@@ -112,3 +112,56 @@ fn json5_reads_and_refuses_what_json5_2_2_1_does() {
 		failures.join("\n")
 	);
 }
+
+/// Scripts stringify their own output (a generator script may return
+/// `JSON.stringify(data)`), so the engine that runs them has to write numbers
+/// and documents as V8 does. QuickJS does, on every vector.
+#[test]
+fn quickjs_writes_numbers_and_documents_as_v8_writes_them() {
+	let runtime = rquickjs::Runtime::new().expect("a QuickJS runtime");
+	let context = rquickjs::Context::full(&runtime).expect("a QuickJS context");
+	let numbers = vectors("numbers.json");
+	let documents = vectors("stringify.json");
+	let mut failures = Vec::new();
+	context.with(|ctx| {
+		let number: rquickjs::Function = ctx
+			.eval("(n) => [JSON.stringify(n), String(n)]")
+			.expect("the number probe compiles");
+		for case in &numbers {
+			let n = f64::from_bits(u64::from_str_radix(&case[0], 16).expect("hex bits"));
+			let [json, string]: [String; 2] = number
+				.call::<_, Vec<String>>((n,))
+				.expect("the probe runs")
+				.try_into()
+				.expect("two strings");
+			// JSON.stringify writes the non-finite numbers as null, and String
+			// writes them by name.
+			let expected_string = match n {
+				n if n.is_nan() => "NaN",
+				f64::INFINITY => "Infinity",
+				f64::NEG_INFINITY => "-Infinity",
+				_ => &case[1],
+			};
+			if json != case[1] || string != expected_string {
+				failures.push(format!("{}: V8 {}, QuickJS {json} and {string}", case[0], case[1]));
+			}
+		}
+		let document: rquickjs::Function = ctx
+			.eval("(s) => { const v = JSON.parse(s); return [JSON.stringify(v), JSON.stringify(v, null, '\\t')] }")
+			.expect("the document probe compiles");
+		for case in &documents {
+			let written: Vec<String> = document.call((case[0].clone(),)).expect("the probe runs");
+			if written[0] != case[1] || written[1] != case[2] {
+				failures.push(format!("{}\n  V8      {}\n  QuickJS {}", case[0], case[1], written[0]));
+			}
+		}
+	});
+	assert!(numbers.len() > 6000 && documents.len() > 1500);
+	assert!(
+		failures.is_empty(),
+		"{} of {} differ:\n{}",
+		failures.len(),
+		numbers.len() + documents.len(),
+		failures.join("\n")
+	);
+}

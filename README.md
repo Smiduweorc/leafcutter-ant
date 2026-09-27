@@ -22,8 +22,8 @@ list that names one gets an error on the console for it and the build goes
 on without it. Hot updates and `watch` come after that.
 
 The library's runtime dependencies are `indexmap`, `ryu-js`, `regress`,
-`futures-util`, `swc`, `swc_common` and `serde_json`, each with its reason in
-`Cargo.toml`, and it does nothing until it is called. `Cargo.lock` holds swc
+`futures-util`, `swc`, `swc_common`, `serde_json` and `rquickjs`, each with
+its reason in `Cargo.toml`, and it does nothing until it is called. `Cargo.lock` holds swc
 and the crates around it at the versions swc 1.6.5 was released with; do not
 let `cargo update` move them.
 
