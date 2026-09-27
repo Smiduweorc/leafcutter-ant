@@ -1,0 +1,7 @@
+# rustup, cargo and rust-analyzer all read this file, so the toolchain is pinned
+# here and nowhere else (mise.toml leaves Rust out on purpose). Keep channel in
+# step with rust-version in Cargo.toml.
+[toolchain]
+channel = "1.98"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

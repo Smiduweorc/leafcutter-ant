@@ -1,0 +1,7 @@
+# Pinned tooling. `mise install` fetches these as single binaries; no Node,
+# no package manager, nothing installed globally. Rust is pinned in
+# rust-toolchain.toml instead, which rustup reads on its own.
+[tools]
+just = "1"
+lefthook = "2"
+git-cliff = "2"

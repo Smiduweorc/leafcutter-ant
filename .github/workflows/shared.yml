@@ -1,0 +1,26 @@
+name: Shared files
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master]
+  # black-garden-ants can change while this repo sits still, and a check that
+  # only runs on push here would never notice. Monday mornings, UTC.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shared:
+    name: Match black-garden-ants
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Compare with black-garden-ants src/core
+        run: scripts/check-shared.sh

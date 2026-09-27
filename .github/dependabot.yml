@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # "include: scope" makes the messages chore(deps): ..., which cliff.toml
+  # skips, so dependency bumps stay out of CHANGELOG.md.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      cargo-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        update-types: [minor, patch]

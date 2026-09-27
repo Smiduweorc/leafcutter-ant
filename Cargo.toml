@@ -1,0 +1,25 @@
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+# Every crate inherits these with `<key>.workspace = true`, so a release bumps
+# the version in one place (scripts/tasks.sh bump-version edits this table).
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+# The oldest toolchain CI builds with, which is the one rust-toolchain.toml
+# pins. Raise the two together.
+rust-version = "1.98"
+license = "ISC"
+# Publishing is a manual decision. Remove this once a crate is meant to go to a
+# registry.
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+unimplemented = "warn"

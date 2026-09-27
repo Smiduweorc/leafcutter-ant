@@ -1,0 +1,3 @@
+# LF everywhere, including a Windows checkout: the shell scripts do not run
+# with CRLF line endings, and CI runs them on Windows.
+* text=auto eol=lf

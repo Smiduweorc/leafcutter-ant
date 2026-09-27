@@ -1,0 +1,25 @@
+# Git hooks, managed by lefthook (https://lefthook.dev).
+# Install them with the "setup" task. YAML needs spaces, so no tabs here.
+#
+# Every hook shells out to scripts/tasks.sh, which is the single definition of
+# what fmt/lint/test mean for this project. That keeps the hooks, the task
+# runner and CI running exactly the same commands.
+
+pre-commit:
+    parallel: false
+    commands:
+        fmt:
+            run: scripts/tasks.sh fmt {staged_files}
+            stage_fixed: true
+        lint:
+            run: scripts/tasks.sh lint
+
+pre-push:
+    commands:
+        test:
+            run: scripts/tasks.sh test
+
+commit-msg:
+    commands:
+        conventional:
+            run: scripts/commit-msg.sh {1}

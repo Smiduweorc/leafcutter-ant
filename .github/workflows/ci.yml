@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [master, dev]
+    paths-ignore: ["**.md"]
+  pull_request:
+    branches: [master]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, test & build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    # scripts/tasks.sh is a POSIX shell script, and the default shell on the
+    # Windows runner is PowerShell, which cannot run it.
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # The runners ship rustup; with no argument it installs the toolchain
+      # rust-toolchain.toml pins, rustfmt and clippy included. lefthook,
+      # git-cliff and just only matter on a developer machine, so CI runs
+      # scripts/tasks.sh directly and needs no mise.
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+
+      - name: Lint
+        run: scripts/tasks.sh lint
+
+      - name: Test
+        run: scripts/tasks.sh test
+
+      - name: Build
+        run: scripts/tasks.sh build

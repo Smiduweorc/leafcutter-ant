@@ -1,0 +1,6 @@
+# Tabs, like every other file in the org that allows them.
+hard_tabs = true
+# `cargo fmt` takes the edition from Cargo.toml; the pre-commit hook calls
+# rustfmt directly on staged files, which reads it from here instead. Keep it
+# equal to the edition in Cargo.toml.
+edition = "2024"
