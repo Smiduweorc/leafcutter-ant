@@ -1,3 +1,8 @@
 # LF everywhere, including a Windows checkout: the shell scripts do not run
 # with CRLF line endings, and CI runs them on Windows.
 * text=auto eol=lf
+
+# Test inputs whose bytes are the test, CRLF line endings and byte order marks
+# included.
+/crates/leafcutter-ant/tests/corpus/** -text
+/tools/parity/typescript/** -text
