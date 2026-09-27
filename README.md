@@ -1,5 +1,7 @@
 # leafcutter-ant
 
+![logo of a leafcutter ant](./assets/logo.png)
+
 **leafcutter-ant is a Rust port of the Dash compiler that bridge. uses for
 Minecraft Bedrock add-ons: the same project in, the same bytes out.**
 
@@ -169,6 +171,7 @@ one of them, change it in black-garden-ants first, then copy it here.
 | `crates/leafcutter-ant/` | The library: everything the compiler does |
 | `crates/leafcutter-ant/tests/vectors/` | Golden vectors recorded by `tools/parity` |
 | `crates/leafcutter-ant-cli/` | The `leafcutter` binary: arguments in, library call, output out |
+| `assets/logo.png` | The logo, drawn by grml |
 | `tools/parity/` | The pinned JavaScript that records the vectors and json5's tables |
 | `Cargo.toml` | Workspace members, the shared version, and the lint levels |
 | `rust-toolchain.toml` | The pinned Rust release, with rustfmt and clippy |
