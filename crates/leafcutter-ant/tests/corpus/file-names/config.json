@@ -1,0 +1,11 @@
+{
+	"packs": {
+		"behaviorPack": "./BP"
+	},
+	"compiler": {
+		"plugins": [
+			"contentsFile",
+			"simpleRewrite"
+		]
+	}
+}

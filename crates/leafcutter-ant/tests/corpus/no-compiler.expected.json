@@ -1,0 +1,22 @@
+{
+	"production": {
+		"written": {},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {}
+	},
+	"development-out": {
+		"written": {},
+		"removed": [],
+		"output": {}
+	}
+}

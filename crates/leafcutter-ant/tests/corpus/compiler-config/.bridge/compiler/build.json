@@ -1,0 +1,4 @@
+{
+	// json5, as Dash reads it
+	plugins: [["simpleRewrite", {packName: "From Compiler Config"}], "contentsFile"],
+}

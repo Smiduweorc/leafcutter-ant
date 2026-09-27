@@ -1,0 +1,33 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/Bridge BP/manifest.json": "[]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"CP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"missing/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"CP/x.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"config.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dev/Bridge BP/manifest.json": "[]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/Bridge BP/manifest.json": "[]"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"CP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"missing/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"CP/x.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"config.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"development_behavior_packs/Bridge BP/manifest.json": "[]"
+		}
+	}
+}

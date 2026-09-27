@@ -1,0 +1,37 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/From Compiler Config BP/manifest.json": "[]",
+			"builds/dist/From Compiler Config RP/manifest.json": "[]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"RP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dev/From Compiler Config BP/manifest.json": "[]",
+			"builds/dev/From Compiler Config RP/manifest.json": "[]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/From Compiler Config BP/manifest.json": "[]",
+			"builds/dist/From Compiler Config RP/manifest.json": "[]"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"RP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"development_behavior_packs/From Compiler Config BP/manifest.json": "[]",
+			"development_resource_packs/From Compiler Config RP/manifest.json": "[]"
+		}
+	}
+}

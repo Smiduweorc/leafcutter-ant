@@ -1,0 +1,14 @@
+{
+	"packs": {
+		"behaviorPack": "BP/",
+		"customPack": "./CP",
+		"resourcePack": "./missing",
+		"worldTemplate": "."
+	},
+	"compiler": {
+		"plugins": [
+			"simpleRewrite",
+			"contentsFile"
+		]
+	}
+}

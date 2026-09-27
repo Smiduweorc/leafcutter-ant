@@ -1,0 +1,10 @@
+{
+	"packs": {
+		"behaviorPack": "./BP"
+	},
+	"compiler": {
+		"plugins": [
+			"rewriteForPackaging"
+		]
+	}
+}

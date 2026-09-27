@@ -1,0 +1,16 @@
+{
+	"packs": {
+		"behaviorPack": "./BP"
+	},
+	"compiler": {
+		"plugins": [
+			"nope",
+			[
+				"alsoNope",
+				{}
+			],
+			"simpleRewrite",
+			"constructor"
+		]
+	}
+}

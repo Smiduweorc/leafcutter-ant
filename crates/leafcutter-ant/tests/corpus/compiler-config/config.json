@@ -1,0 +1,9 @@
+{
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP"
+	},
+	"compiler": {
+		"plugins": []
+	}
+}
