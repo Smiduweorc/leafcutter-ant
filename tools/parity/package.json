@@ -4,7 +4,7 @@
 	"description": "Runs the TypeScript Dash stack to produce the golden vectors the Rust tests compare against.",
 	"type": "module",
 	"scripts": {
-		"vectors": "node vectors.mjs && node unicode-tables.mjs && node paths.mjs && node globs.mjs"
+		"vectors": "node vectors.mjs && node unicode-tables.mjs && node paths.mjs && node globs.mjs && node project.mjs"
 	},
 	"dependencies": {
 		"@bridge-editor/common-utils": "0.3.3",

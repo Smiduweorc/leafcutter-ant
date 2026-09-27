@@ -47,6 +47,7 @@ loads, at the versions TS Dash's lockfile resolves, and Node through
 | `paths.json` | pathe 2.0.2 (which Dash imports) and pathe 1.1.2 (which mc-project-core imports) on edge cases and random paths |
 | `globs.json` | the picomatch that common-utils vendors: the regex source it builds for every file definition matcher, the float fix's globs and random globs, whether V8 compiles that source, and `isMatch` on paths built to match and paths that should not |
 | `is-glob.json` | is-glob 4.0.3 on the same globs and on random strings |
+| `project.json` | mc-project-core 0.5.0 with the vendored definitions: pack roots and pack and file type detection for regular and malformed project configs, with picomatch as the matcher (as the Deno CLI sets it up) and with a matcher that never matches (as the editor does) |
 
 The Rust tests compare against every vector. CI records the vectors again and
 fails if the committed copies differ, so the files cannot drift from what the
@@ -107,10 +108,11 @@ Where leafcutter-ant differs from TS Dash, and why:
 
 | Difference | TS Dash | leafcutter-ant | Why |
 | --- | --- | --- | --- |
-| A `\u` escape that leaves a lone surrogate | keeps it, writes `"\udXXX"` | U+FFFD | Rust strings cannot hold a lone surrogate |
+| A `\u` escape that leaves a lone surrogate, or a config whose `packs` is a string split between the halves of a surrogate pair | keeps it, writes `"\udXXX"` | U+FFFD | Rust strings cannot hold a lone surrogate |
 | Tab-indented output nested more than about 4,000 deep | V8 throws `RangeError` | writes it | the writer does not recurse |
 | U+2028 or U+2029 inside a json5 string | json5 prints a warning to the console | reads it silently | a library does not print |
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
+| File or pack definitions that are not an array of objects with a string `id` | takes them and fails later, where a plugin asks for a file type | refused when the host builds `FileTypes` or `PackTypes` | the definitions come from the host, which can report them at startup |
 | pathe's `resolve` and `relative` on a path that climbs above the working directory | resolved against `process.cwd()` in the Deno CLI and against `/` in the editor | resolved against `/` | the result then depends on no process state; relative paths that stay below the working directory give the same answer either way |
 
 ## Tasks

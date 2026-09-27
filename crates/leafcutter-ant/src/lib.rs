@@ -7,14 +7,18 @@
 // decide what to print.
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
-// The next two are reached from the project model and the pipeline, which
-// arrive in later commits; each `expect` turns into a warning once every item
-// in its module has a caller.
+// The modules marked `expect(dead_code)` are reached from the pipeline, which
+// arrives in a later commit; each `expect` turns into a warning once every
+// item in its module has a caller.
 #[cfg_attr(not(test), expect(dead_code))]
 mod glob;
+#[cfg_attr(not(test), expect(dead_code))]
+mod js;
 pub mod json;
 #[cfg_attr(not(test), expect(dead_code))]
 mod pathe;
+#[expect(dead_code)]
+pub mod project;
 
 // Runs the Rust examples in the README as doctests, so the README cannot show
 // code that no longer compiles or no longer holds.
