@@ -32,7 +32,8 @@ dependencies, `indexmap` and `ryu-js`, and does nothing until it is called.
 ## How it works
 
 Parity is measured against the JavaScript that TS Dash runs, not described.
-`tools/parity` pins that JavaScript (json5 2.2.1, and Node through
+`tools/parity` pins that JavaScript (TS Dash 0.13.0 and every package it
+loads, at the versions TS Dash's lockfile resolves, and Node through
 `.nvmrc`) and records golden vectors from it into
 `crates/leafcutter-ant/tests/vectors/`:
 
@@ -41,6 +42,7 @@ Parity is measured against the JavaScript that TS Dash runs, not described.
 | `numbers.json` | V8's `JSON.stringify` of hand-picked and random f64 values |
 | `stringify.json` | V8's `JSON.stringify` of random documents, compact and tab-indented |
 | `json5.json` | json5 2.2.1's `parse` of edge cases, random json5 and damaged json5: results and error messages |
+| `paths.json` | pathe 2.0.2 (which Dash imports) and pathe 1.1.2 (which mc-project-core imports) on edge cases and random paths |
 
 The Rust tests compare against every vector. CI records the vectors again and
 fails if the committed copies differ, so the files cannot drift from what the
@@ -105,6 +107,7 @@ Where leafcutter-ant differs from TS Dash, and why:
 | Tab-indented output nested more than about 4,000 deep | V8 throws `RangeError` | writes it | the writer does not recurse |
 | U+2028 or U+2029 inside a json5 string | json5 prints a warning to the console | reads it silently | a library does not print |
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
+| pathe's `resolve` and `relative` on a path that climbs above the working directory | resolved against `process.cwd()` in the Deno CLI and against `/` in the editor | resolved against `/` | the result then depends on no process state; relative paths that stay below the working directory give the same answer either way |
 
 ## Tasks
 

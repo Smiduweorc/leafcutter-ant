@@ -8,6 +8,10 @@
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
 pub mod json;
+// Reached from the pipeline, which arrives in a later commit; `expect` turns into
+// a warning once every function has a caller.
+#[cfg_attr(not(test), expect(dead_code))]
+mod pathe;
 
 // Runs the Rust examples in the README as doctests, so the README cannot show
 // code that no longer compiles or no longer holds.
