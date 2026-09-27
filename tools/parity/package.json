@@ -4,9 +4,26 @@
 	"description": "Runs the TypeScript Dash stack to produce the golden vectors the Rust tests compare against.",
 	"type": "module",
 	"scripts": {
-		"vectors": "node vectors.mjs && node unicode-tables.mjs"
+		"vectors": "node vectors.mjs && node unicode-tables.mjs && node paths.mjs"
 	},
 	"dependencies": {
-		"json5": "2.2.1"
+		"@bridge-editor/common-utils": "0.3.3",
+		"@bridge-editor/dash-compiler": "0.13.0",
+		"@bridge-editor/js-runtime": "0.4.5",
+		"@bridge-editor/mc-project-core": "0.5.0",
+		"@bridge-editor/molang": "2.0.2",
+		"@swc/wasm-web": "1.6.5",
+		"is-glob": "4.0.3",
+		"json5": "2.2.1",
+		"pathe": "2.0.2",
+		"pathe-1": "npm:pathe@1.1.2"
+	},
+	"overrides": {
+		"@bridge-editor/mc-project-core": {
+			"pathe": "1.1.2"
+		},
+		"compare-versions": "4.1.2",
+		"is-extglob": "2.1.1",
+		"path-browserify": "1.0.1"
 	}
 }

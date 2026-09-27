@@ -6,43 +6,14 @@
 //
 // Usage: npm ci && npm run vectors   (from tools/parity)
 
-import { writeFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 import JSON5 from "json5"
-
-const outDir = fileURLToPath(new URL("../../crates/leafcutter-ant/tests/vectors/", import.meta.url))
+import { random as seeded, write } from "./record.mjs"
 
 // json5 warns on stderr about U+2028 and U+2029 inside strings; the vectors
 // cover that case on purpose.
 console.warn = () => {}
 
-// mulberry32: small, seedable, and identical on every Node version.
-function prng(seed) {
-	let a = seed >>> 0
-	return () => {
-		a = (a + 0x6d2b79f5) >>> 0
-		let t = a
-		t = Math.imul(t ^ (t >>> 15), t | 1)
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-	}
-}
-const random = prng(0x1eafc07)
-const int = (n) => Math.floor(random() * n)
-const pick = (list) => list[int(list.length)]
-function shuffled(list) {
-	const copy = [...list]
-	for (let i = copy.length - 1; i > 0; i--) {
-		const j = int(i + 1)
-		;[copy[i], copy[j]] = [copy[j], copy[i]]
-	}
-	return copy
-}
-
-function write(name, vectors) {
-	// One vector per line keeps diffs of a regenerated file readable.
-	writeFileSync(outDir + name, "[\n" + vectors.map((v) => JSON.stringify(v)).join(",\n") + "\n]\n")
-}
+const { next: random, int, pick, shuffled } = seeded(0x1eafc07)
 
 function bitsOf(x) {
 	const view = new DataView(new ArrayBuffer(8))
