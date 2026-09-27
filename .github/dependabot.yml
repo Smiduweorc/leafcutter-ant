@@ -1,4 +1,6 @@
 version: 2
+# tools/parity is left out on purpose: its npm pins are the exact versions TS
+# Dash 0.13.0 resolves, and the golden vectors are only valid for those.
 updates:
   # "include: scope" makes the messages chore(deps): ..., which cliff.toml
   # skips, so dependency bumps stay out of CHANGELOG.md.

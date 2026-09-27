@@ -52,3 +52,30 @@ jobs:
 
       - name: Build
         run: scripts/tasks.sh build
+
+  # The golden vectors and json5's character tables are recorded from the
+  # JavaScript TS Dash runs. Recording them again must change nothing; a
+  # difference means the committed copies were edited by hand or are stale.
+  vectors:
+    name: Golden vectors are current
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install the pinned Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: tools/parity/.nvmrc
+
+      - name: Install the TS Dash dependencies from the lockfile
+        run: npm ci
+        working-directory: tools/parity
+
+      - name: Record the vectors and tables again
+        run: npm run vectors
+        working-directory: tools/parity
+
+      - name: Fail if the committed copies differ
+        run: git diff --exit-code

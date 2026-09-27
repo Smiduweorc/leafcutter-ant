@@ -1,0 +1,12 @@
+{
+	"name": "leafcutter-ant-parity",
+	"private": true,
+	"description": "Runs the TypeScript Dash stack to produce the golden vectors the Rust tests compare against.",
+	"type": "module",
+	"scripts": {
+		"vectors": "node vectors.mjs && node unicode-tables.mjs"
+	},
+	"dependencies": {
+		"json5": "2.2.1"
+	}
+}
