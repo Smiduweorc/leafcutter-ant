@@ -1,0 +1,4 @@
+{
+	"format_version": "1.18.30",
+	"minecraft:block": {"description": {"identifier": "t:b"}}
+}

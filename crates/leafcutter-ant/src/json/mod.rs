@@ -124,6 +124,15 @@ impl Object {
 		}
 	}
 
+	/// Removes `key`, as `delete object[key]` does, keeping the order of the
+	/// other keys. Returns the value it held.
+	pub fn remove(&mut self, key: &str) -> Option<Value> {
+		match array_index(key) {
+			Some(index) => self.indices.remove(&index).map(|(_, value)| value),
+			None => self.named.shift_remove(key),
+		}
+	}
+
 	/// The keys and values, in JavaScript's order.
 	pub fn iter(&self) -> Iter<'_> {
 		Iter {
@@ -372,6 +381,18 @@ mod tests {
 		assert_eq!(number(object.get("a")), Some(4.0));
 		assert_eq!(number(object.get("5")), Some(5.0));
 		assert_eq!(object.len(), 3);
+	}
+
+	#[test]
+	fn removing_a_key_keeps_the_order_of_the_others() {
+		let mut object = Object::new();
+		for key in ["b", "1", "a", "0", "c"] {
+			object.insert(key.to_owned(), Value::Null);
+		}
+		assert!(object.remove("a").is_some());
+		assert!(object.remove("0").is_some());
+		assert!(object.remove("missing").is_none());
+		assert_eq!(keys(&object), ["1", "b", "c"]);
 	}
 
 	#[test]

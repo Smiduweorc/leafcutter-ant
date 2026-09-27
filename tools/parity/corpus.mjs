@@ -20,8 +20,10 @@ import { CachedFileType, DefinedPackType, NodeFileSystem, QuietConsole } from ".
 
 const corpusDir = fileURLToPath(new URL("../../crates/leafcutter-ant/tests/corpus/", import.meta.url))
 
-// floatPropertyTruncationFix logs through the global console.
+// floatPropertyTruncationFix and formatVersionCorrection log through the
+// global console.
 console.log = () => {}
+console.error = () => {}
 
 // Every file under dir, relative to it, with its bytes.
 function snapshot(dir) {

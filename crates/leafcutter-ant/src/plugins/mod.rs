@@ -2,6 +2,7 @@
 //! uses for them.
 
 mod entity_identifier;
+mod format_version;
 mod rewrite_for_packaging;
 mod simple_rewrite;
 
@@ -21,6 +22,9 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 	match id {
 		"entityIdentifierAlias" => {
 			BuiltIn::Plugin(Box::new(entity_identifier::EntityIdentifierAlias))
+		}
+		"formatVersionCorrection" => {
+			BuiltIn::Plugin(Box::new(format_version::FormatVersionCorrection::new(cx)))
 		}
 		"rewriteForPackaging" => BuiltIn::Plugin(Box::new(
 			rewrite_for_packaging::RewriteForPackaging::new(cx, options),
