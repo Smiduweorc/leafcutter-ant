@@ -3,12 +3,12 @@
 version = 4
 
 [[package]]
-name = "app"
+name = "leafcutter-ant"
 version = "0.0.0"
 
 [[package]]
-name = "app-cli"
+name = "leafcutter-ant-cli"
 version = "0.0.0"
 dependencies = [
- "app",
+ "leafcutter-ant",
 ]

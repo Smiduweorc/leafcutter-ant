@@ -1,6 +1,6 @@
 [package]
-name = "app-cli"
-description = "The command-line host for the app library."
+name = "leafcutter-ant-cli"
+description = "The command-line host for the leafcutter-ant compiler."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,14 +8,14 @@ license.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "app"
+name = "leafcutter"
 path = "src/main.rs"
 # A binary has no API to document, and its docs would land on top of the
-# library's in target/doc/app.
+# library's in target/doc/leafcutter_ant.
 doc = false
 
 [dependencies]
-app = { path = "../app" }
+leafcutter-ant = { path = "../leafcutter-ant" }
 
 [lints]
 workspace = true

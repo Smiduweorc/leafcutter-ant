@@ -1,6 +1,6 @@
 [package]
-name = "app"
-description = "The library crate: the program's behaviour lives here."
+name = "leafcutter-ant"
+description = "A native port of the Dash compiler for Minecraft Bedrock add-ons."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
