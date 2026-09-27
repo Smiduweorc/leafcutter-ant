@@ -1,6 +1,7 @@
 //! The built-in plugins (`src/Plugins/BuiltIn/`), by the names a plugin list
 //! uses for them.
 
+mod contents_file;
 mod entity_identifier;
 mod float_fix;
 mod format_version;
@@ -21,6 +22,7 @@ pub(crate) enum BuiltIn {
 /// `builtInPlugins[id]`, created with its context and options.
 pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 	match id {
+		"contentsFile" => BuiltIn::Plugin(Box::new(contents_file::ContentsFile::new(cx, options))),
 		"entityIdentifierAlias" => {
 			BuiltIn::Plugin(Box::new(entity_identifier::EntityIdentifierAlias))
 		}

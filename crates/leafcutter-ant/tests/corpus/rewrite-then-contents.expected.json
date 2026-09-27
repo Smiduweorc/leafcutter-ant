@@ -1,0 +1,53 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/Bridge BP/blocks/b.json": "[]",
+			"builds/dist/Bridge BP/entities/cow.json": "[]",
+			"builds/dist/Bridge BP/entities/player.json": "[]",
+			"builds/dist/Bridge BP/manifest.json": "[]",
+			"builds/dist/Bridge RP/manifest.json": "[]",
+			"builds/dist/Bridge RP/textures/t.png": "[]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"RP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/b.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/cow.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/player.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/t.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dev/Bridge BP/blocks/b.json": "[]",
+			"builds/dev/Bridge BP/entities/cow.json": "[]",
+			"builds/dev/Bridge BP/entities/player.json": "[]",
+			"builds/dev/Bridge BP/manifest.json": "[]",
+			"builds/dev/Bridge RP/manifest.json": "[]",
+			"builds/dev/Bridge RP/textures/t.png": "[]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/Bridge BP/blocks/b.json": "[]",
+			"builds/dist/Bridge BP/entities/cow.json": "[]",
+			"builds/dist/Bridge BP/entities/player.json": "[]",
+			"builds/dist/Bridge BP/manifest.json": "[]",
+			"builds/dist/Bridge RP/manifest.json": "[]",
+			"builds/dist/Bridge RP/textures/t.png": "[]"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"RP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/b.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/cow.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/player.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/t.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"development_behavior_packs/Bridge BP/blocks/b.json": "[]",
+			"development_behavior_packs/Bridge BP/entities/cow.json": "[]",
+			"development_behavior_packs/Bridge BP/entities/player.json": "[]",
+			"development_behavior_packs/Bridge BP/manifest.json": "[]",
+			"development_resource_packs/Bridge RP/manifest.json": "[]",
+			"development_resource_packs/Bridge RP/textures/t.png": "[]"
+		}
+	}
+}

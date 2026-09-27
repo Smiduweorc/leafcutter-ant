@@ -1,0 +1,14 @@
+{
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP"
+	},
+	"compiler": {
+		"plugins": [
+			"floatPropertyTruncationFix",
+			"formatVersionCorrection",
+			"contentsFile",
+			"simpleRewrite"
+		]
+	}
+}

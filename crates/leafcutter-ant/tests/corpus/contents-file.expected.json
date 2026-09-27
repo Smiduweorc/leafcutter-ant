@@ -1,0 +1,26 @@
+{
+	"production": {
+		"written": {},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"RP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/b.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/cow.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/player.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/t.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"RP/contents.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/b.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/cow.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/entities/player.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"RP/textures/t.png\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {}
+	}
+}
