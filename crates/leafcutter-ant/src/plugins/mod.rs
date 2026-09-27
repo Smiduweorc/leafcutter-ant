@@ -1,6 +1,7 @@
 //! The built-in plugins (`src/Plugins/BuiltIn/`), by the names a plugin list
 //! uses for them.
 
+mod entity_identifier;
 mod rewrite_for_packaging;
 mod simple_rewrite;
 
@@ -18,6 +19,9 @@ pub(crate) enum BuiltIn {
 /// `builtInPlugins[id]`, created with its context and options.
 pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 	match id {
+		"entityIdentifierAlias" => {
+			BuiltIn::Plugin(Box::new(entity_identifier::EntityIdentifierAlias))
+		}
 		"rewriteForPackaging" => BuiltIn::Plugin(Box::new(
 			rewrite_for_packaging::RewriteForPackaging::new(cx, options),
 		)),

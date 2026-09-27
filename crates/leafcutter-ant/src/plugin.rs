@@ -440,6 +440,12 @@ impl Plugins {
 		&self.by_hook[hook.index()]
 	}
 
+	/// The first plugin, for tests that call a built-in's hooks directly.
+	#[cfg(test)]
+	pub(crate) fn first(&mut self) -> &mut dyn Plugin {
+		&mut *self.entries[0].1
+	}
+
 	pub(crate) fn id(&self, index: usize) -> &str {
 		&self.entries[index].0
 	}

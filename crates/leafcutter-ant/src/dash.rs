@@ -127,6 +127,13 @@ impl Dash {
 		}
 	}
 
+	/// The context and the first plugin, for tests that call a built-in's
+	/// hooks directly.
+	#[cfg(test)]
+	pub(crate) fn first_plugin(&mut self) -> (&Context, &mut dyn crate::plugin::Plugin) {
+		(&self.cx, self.plugins.first())
+	}
+
 	/// The build's progress, for a progress bar.
 	pub fn progress(&self) -> &Progress {
 		&self.progress

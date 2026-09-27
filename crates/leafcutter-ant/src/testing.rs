@@ -1,4 +1,5 @@
-//! What the unit tests share: an in-memory file system.
+//! What the unit tests share: an in-memory file system, and a compiler set
+//! up with one built-in plugin and the vendored definitions.
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -117,4 +118,61 @@ impl FileSystem for MemoryFs {
 	fn last_modified<'a>(&'a self, _path: &'a str) -> FsFuture<'a, f64> {
 		Box::pin(async { Ok(0.0) })
 	}
+}
+
+fn vendored(name: &str) -> crate::json::Value {
+	let path = format!("{}/tests/data/{name}", env!("CARGO_MANIFEST_DIR"));
+	let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
+	crate::json::parse_json5(&text).expect("the definitions are JSON")
+}
+
+/// A development compiler for a project with a behavior and a resource pack
+/// whose plugin list is `plugins`, set up and ready to build.
+pub(crate) fn dash_with(fs: Rc<MemoryFs>, plugins: &str) -> crate::Dash {
+	let config = format!(
+		r#"{{"packs": {{"behaviorPack": "./BP", "resourcePack": "./RP"}}, "compiler": {{"plugins": {plugins}}}}}"#
+	);
+	fs.files
+		.borrow_mut()
+		.insert("config.json".to_owned(), config.into_bytes());
+	let options = crate::DashOptions {
+		config: "./config.json".to_owned(),
+		compiler_config: None,
+		mode: crate::Mode::Development,
+		console: Rc::new(crate::console::tests::Recorder::default()),
+		verbose: false,
+		pack_types: crate::project::PackTypes::new(vendored("packDefinitions.json"))
+			.expect("pack definitions"),
+		file_types: crate::project::FileTypes::new(
+			vendored("fileDefinitions.json"),
+			crate::project::DetectMatcher::Glob,
+		)
+		.expect("file definitions"),
+	};
+	let mut dash = crate::Dash::new(fs, None, options);
+	futures_executor::block_on(dash.setup()).expect("setup succeeds");
+	dash
+}
+
+/// A vector file as JSON.
+pub(crate) fn vectors(name: &str) -> serde_json::Value {
+	let path = format!("{}/tests/vectors/{name}", env!("CARGO_MANIFEST_DIR"));
+	let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
+	serde_json::from_str(&text).unwrap_or_else(|e| panic!("{path}: {e}"))
+}
+
+/// The recorded answers of one plugin in plugins.json.
+pub(crate) fn plugin_vectors(plugin: &str) -> Vec<serde_json::Value> {
+	vectors("plugins.json")
+		.as_array()
+		.expect("an array")
+		.iter()
+		.find(|entry| entry[0] == plugin)
+		.and_then(|entry| entry[1].as_array().cloned())
+		.unwrap_or_else(|| panic!("no vectors for {plugin}"))
+}
+
+/// A serde value as one of ours, keys in the order the JSON lists them.
+pub(crate) fn value(json: &serde_json::Value) -> crate::json::Value {
+	crate::json::parse_json5(&json.to_string()).expect("JSON is json5")
 }
