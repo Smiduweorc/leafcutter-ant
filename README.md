@@ -15,8 +15,10 @@ questions are in `PRD-native-dash-compiler.md` next to this repository.
 It cannot build a project yet. The port goes from the leaves up, and so far
 holds the JSON layer the rest is built on: JSON values with JavaScript's
 property order, a port of the json5 2.2.1 reader Dash bundles, and a writer
-that matches V8's `JSON.stringify`. The library has two runtime
-dependencies, `indexmap` and `ryu-js`, and does nothing until it is called.
+that matches V8's `JSON.stringify`, plus the path functions and glob matcher
+Dash uses. The library's runtime dependencies are `indexmap`, `ryu-js` and
+`regress`, each with its reason in `Cargo.toml`, and it does nothing until it
+is called.
 
 ## leafcutter-ant is not for you if you
 
@@ -43,6 +45,8 @@ loads, at the versions TS Dash's lockfile resolves, and Node through
 | `stringify.json` | V8's `JSON.stringify` of random documents, compact and tab-indented |
 | `json5.json` | json5 2.2.1's `parse` of edge cases, random json5 and damaged json5: results and error messages |
 | `paths.json` | pathe 2.0.2 (which Dash imports) and pathe 1.1.2 (which mc-project-core imports) on edge cases and random paths |
+| `globs.json` | the picomatch that common-utils vendors: the regex source it builds for every file definition matcher, the float fix's globs and random globs, whether V8 compiles that source, and `isMatch` on paths built to match and paths that should not |
+| `is-glob.json` | is-glob 4.0.3 on the same globs and on random strings |
 
 The Rust tests compare against every vector. CI records the vectors again and
 fails if the committed copies differ, so the files cannot drift from what the
@@ -173,6 +177,7 @@ one of them, change it in black-garden-ants first, then copy it here.
 | --- | --- |
 | `crates/leafcutter-ant/` | The library: everything the compiler does |
 | `crates/leafcutter-ant/tests/vectors/` | Golden vectors recorded by `tools/parity` |
+| `crates/leafcutter-ant/tests/data/` | `fileDefinitions.json` and `packDefinitions.json` from bridge-core/editor-packages at commit `10e360dc`, the data TS Dash fetches at run time |
 | `crates/leafcutter-ant-cli/` | The `leafcutter` binary: arguments in, library call, output out |
 | `assets/logo.png` | The logo, drawn by grml |
 | `tools/parity/` | The pinned JavaScript that records the vectors and json5's tables |
@@ -184,7 +189,7 @@ one of them, change it in black-garden-ants first, then copy it here.
 | `scripts/check-shared.sh` | The black-garden-ants comparison |
 | `release.sh`, `cliff.toml`, `lefthook.yml`, `scripts/commit-msg.sh` | Shared release flow, changelog rules, hooks and commit check |
 | `LICENSE` | Dash's MIT licence, which leafcutter-ant is released under |
-| `NOTICE.md` | The licence notice for json5, whose parser is ported here |
+| `NOTICE.md` | The licence notices for the code ported here and the vendored test data |
 
 ## Lints
 
@@ -209,4 +214,4 @@ decides what to show.
 ## Licence
 
 MIT: Dash's licence, in `LICENSE`, since leafcutter-ant is a port of it.
-`NOTICE.md` holds json5's notice for its ported parser.
+`NOTICE.md` holds the notices for the code ported from other MIT projects.

@@ -7,9 +7,12 @@
 // decide what to print.
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
+// The next two are reached from the project model and the pipeline, which
+// arrive in later commits; each `expect` turns into a warning once every item
+// in its module has a caller.
+#[cfg_attr(not(test), expect(dead_code))]
+mod glob;
 pub mod json;
-// Reached from the pipeline, which arrives in a later commit; `expect` turns into
-// a warning once every function has a caller.
 #[cfg_attr(not(test), expect(dead_code))]
 mod pathe;
 

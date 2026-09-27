@@ -8,6 +8,10 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# ECMAScript regular expressions, to run the regex sources picomatch builds
+# with the semantics V8 gives them; utf16 matches over UTF-16 code units, as
+# RegExp#exec does outside unicode mode.
+regress = { version = "0.12.0", features = ["utf16"] }
 # Keeps object keys in insertion order with O(1) lookup; JavaScript property
 # order is built on top of it in src/json/mod.rs.
 indexmap = "2.14"
