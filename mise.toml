@@ -1,7 +1,12 @@
-# Pinned tooling. `mise install` fetches these as single binaries; no Node,
-# no package manager, nothing installed globally. Rust is pinned in
+# Pinned tooling. `mise install` fetches the first three as single binaries; no
+# Node, no package manager, nothing installed globally. Rust is pinned in
 # rust-toolchain.toml instead, which rustup reads on its own.
+#
+# commitlint-rs 0.2.3 and 0.2.4 ship no release binaries, so mise builds it
+# with cargo from crates.io. scripts/commit-msg.sh uses it because
+# .commitlintrc.yml exists.
 [tools]
 just = "1"
 lefthook = "2"
 git-cliff = "2"
+"cargo:commitlint-rs" = "0.2.4"

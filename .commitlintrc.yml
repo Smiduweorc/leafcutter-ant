@@ -1,0 +1,17 @@
+# commitlint-rs rules, read by scripts/commit-msg.sh through the commit-msg
+# hook. A config replaces commitlint-rs' defaults entirely, so the defaults it
+# would apply (non-empty type, subject and description) are listed again. The
+# types are the ones the script's own regex fallback accepts, each of which
+# cliff.toml groups into the changelog. The 100-character cap
+# on the subject line lives in scripts/commit-msg.sh, because commitlint-rs
+# has no rule for it.
+rules:
+  type:
+    level: error
+    options: [feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert]
+  type-empty:
+    level: error
+  subject-empty:
+    level: error
+  description-empty:
+    level: error

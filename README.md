@@ -215,9 +215,10 @@ and CI all call into it, so they cannot drift apart. Every cargo call passes
 being rewritten. Recording the golden vectors needs Node, so it is the
 `vectors` script in `tools/parity/package.json` instead.
 
-`just setup` needs [mise](https://mise.jdx.dev) (for just, lefthook and
-git-cliff) and [rustup](https://rustup.rs). Before just exists, run
-`scripts/tasks.sh setup`.
+`just setup` needs [mise](https://mise.jdx.dev) (for just, lefthook,
+git-cliff and commitlint-rs) and [rustup](https://rustup.rs). Before just
+exists, run `scripts/tasks.sh setup`. commitlint-rs has no release binaries
+for the pinned version, so the first `mise install` builds it with cargo.
 
 ## Releasing
 
@@ -239,7 +240,14 @@ Commit messages follow [Conventional Commits][cc]. `scripts/commit-msg.sh`
 checks them in the commit-msg hook, and git-cliff builds `CHANGELOG.md` from
 them. Dependabot's bumps are `chore(deps): ...`, which the changelog skips.
 
+Because `.commitlintrc.yml` exists, the hook hands the message to
+[commitlint-rs][clrs] (pinned in `mise.toml`) with the rules in that file, and
+still refuses a subject line over 100 characters, which commitlint-rs has no
+rule for. Without commitlint-rs on `PATH` it falls back to its own regex,
+which accepts the same types.
+
 [cc]: https://www.conventionalcommits.org
+[clrs]: https://github.com/KeisukeYamashita/commitlint-rs
 
 ## Files shared with black-garden-ants
 
@@ -264,7 +272,8 @@ one of them, change it in black-garden-ants first, then copy it here.
 | `Cargo.toml` | Workspace members, the shared version, and the lint levels |
 | `rust-toolchain.toml` | The pinned Rust release, with rustfmt and clippy |
 | `rustfmt.toml` | Tabs, and the edition rustfmt uses when the hook calls it directly |
-| `mise.toml` | just, lefthook and git-cliff |
+| `mise.toml` | just, lefthook, git-cliff and commitlint-rs |
+| `.commitlintrc.yml` | The commitlint-rs rules the commit-msg hook applies |
 | `scripts/tasks.sh` | What every task means. Edit the Rust part to change behaviour. |
 | `scripts/check-shared.sh` | The black-garden-ants comparison |
 | `release.sh`, `cliff.toml`, `lefthook.yml`, `scripts/commit-msg.sh` | Shared release flow, changelog rules, hooks and commit check |
