@@ -16,6 +16,11 @@ doc = false
 
 [dependencies]
 leafcutter-ant = { path = "../leafcutter-ant" }
+# Drives the library's futures to completion; the build runs on one thread.
+futures-executor = "0.3"
+# Fetches the pack and file definitions from bridge-core/editor-packages, as
+# the Deno CLI does, over HTTPS with rustls and ring (no C toolchain needed).
+ureq = { version = "3", default-features = false, features = ["rustls"] }
 
 [lints]
 workspace = true

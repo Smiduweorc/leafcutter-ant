@@ -12,22 +12,25 @@ something odd that a project can observe, leafcutter-ant does the same odd
 thing and lists it in the quirk ledger below. The plan, milestones and open
 questions are in `PRD-native-dash-compiler.md` next to this repository.
 
-It cannot build a real project yet. The port goes from the leaves up. So far
-it holds the JSON layer (JSON values with JavaScript's property order, a port
-of the json5 2.2.1 reader Dash bundles, and a writer that matches V8's
-`JSON.stringify`), the path functions, glob matcher and project model Dash
-uses, and the compiler pipeline with its plugin host and cache file. The
-built-in plugins come next; plugins written in JavaScript need an embedded
-JavaScript runtime, which comes after them. The library's runtime
-dependencies are `indexmap`, `ryu-js`, `regress`, `futures-util`, `swc`,
-`swc_common` and `serde_json`, each with its reason in `Cargo.toml`, and it
-does nothing until it is called. `Cargo.lock` holds swc and the crates around
-it at the versions swc 1.6.5 was released with; do not let `cargo update`
-move them.
+It builds projects whose plugins are the built-ins that need no
+JavaScript: `simpleRewrite`, `rewriteForPackaging`, `entityIdentifierAlias`,
+`formatVersionCorrection`, `floatPropertyTruncationFix`, `contentsFile` and
+`typeScript`. The built-ins that run user JavaScript (`moLang`, the custom
+components, `customCommands`, `generatorScripts`) and plugins from extensions
+need an embedded JavaScript runtime, which comes next; until then a plugin
+list that names one gets an error on the console for it and the build goes
+on without it. Hot updates and `watch` come after that.
+
+The library's runtime dependencies are `indexmap`, `ryu-js`, `regress`,
+`futures-util`, `swc`, `swc_common` and `serde_json`, each with its reason in
+`Cargo.toml`, and it does nothing until it is called. `Cargo.lock` holds swc
+and the crates around it at the versions swc 1.6.5 was released with; do not
+let `cargo update` move them.
 
 ## leafcutter-ant is not for you if you
 
-- need to build a project today. Use TS Dash, through
+- need JavaScript plugins, Molang functions, custom components, custom
+  commands or generator scripts today, or a watch mode. Use TS Dash, through
   [deno-dash-compiler](https://github.com/bridge-core/deno-dash-compiler) or
   the bridge. editor.
 - want features TS Dash does not have. Nothing new goes in until the output
@@ -111,8 +114,27 @@ assert_eq!(error.to_string(), "JSON5: invalid character ',' at 1:7");
 # Ok::<(), leafcutter_ant::json::Json5Error>(())
 ```
 
-`cargo doc --open` builds the API reference. The `leafcutter` binary prints
-its version and help; the `build` command comes with the compiler pipeline.
+`cargo doc --open` builds the API reference.
+
+To build a project, run `leafcutter build` in its folder, with the Deno
+CLI's flags:
+
+```sh
+cargo build --release
+cd path/to/project
+path/to/leafcutter-ant/target/release/leafcutter build --mode development --out ./out
+```
+
+`--mode` is `production` unless given, `--out` writes into a separate folder
+the way a `com.mojang` folder is written (`preview` names Minecraft
+Preview's, and in development mode the default is Minecraft's own where
+`APPDATA` is set), `--compilerConfig` takes the plugin list from another
+file, and `--noCache` empties the cache first. The project config is
+`dash-config.json` when that file exists, else `config.json`. The pack and
+file definitions come from bridge-core/editor-packages and are kept in
+`~/.dash`, which a build empties once it is more than a day old, as the Deno
+CLI does. The exit code is 0 for a build, 1 when the build could not run,
+and 2 for arguments it does not understand.
 
 ## Quirk ledger
 
@@ -147,6 +169,7 @@ separate branch, and this table is that branch's checklist.
 | The list holds the path each `transformPath` call was given, `contents.json` included; a file an earlier plugin already moved out of the pack is left out | `transformPath` pushes its argument and looks up the pack by it | `every_corpus_project_builds_as_ts_dash_builds_it` (`rewrite-then-contents`) |
 | Every build in a session appends the whole pack to the list again | the list is filled in `transformPath` and never emptied, and plugins live from setup to setup | `every_build_in_a_session_appends_the_whole_pack_again` |
 | A `.ts` file swc refuses is written to its `.js` path as the TypeScript source | the `load` hook throws, the host catches it, the data stays the source text, and `finalizeBuild` returns any string (`TypeScript.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`typescript`) |
+| A `~/.dash/.timestamp` that is not a number keeps the cache forever | `parseInt` gives NaN, and `now - NaN > day` is false (`LocalCache.ts`) | `a_timestamp_that_is_not_a_number_never_expires` |
 | A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 
 Where leafcutter-ant differs from TS Dash, and why:
@@ -156,6 +179,8 @@ Where leafcutter-ant differs from TS Dash, and why:
 | A `\u` escape that leaves a lone surrogate, or a config whose `packs` is a string split between the halves of a surrogate pair | keeps it, writes `"\udXXX"` | U+FFFD | Rust strings cannot hold a lone surrogate |
 | Tab-indented output nested more than about 4,000 deep | V8 throws `RangeError` | writes it | the writer does not recurse |
 | The console lines of `floatPropertyTruncationFix` and the parse errors of `formatVersionCorrection` | go to the global `console` | go to the host's `Console` | a library does not print |
+| `leafcutter build` start-up | checks GitHub for a newer release and downloads the swc WebAssembly module | neither | the release check is a network call nobody asked for, and swc is compiled in |
+| Cached definitions in `~/.dash` | read with `JSON.parse` | read with the json5 reader | the cache is written by the tool itself as plain JSON, which both read alike |
 | U+2028 or U+2029 inside a json5 string | json5 prints a warning to the console | reads it silently | a library does not print |
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
 | File or pack definitions that are not an array of objects with a string `id` | takes them and fails later, where a plugin asks for a file type | refused when the host builds `FileTypes` or `PackTypes` | the definitions come from the host, which can report them at startup |
@@ -233,7 +258,7 @@ one of them, change it in black-garden-ants first, then copy it here.
 | `crates/leafcutter-ant/tests/vectors/` | Golden vectors recorded by `tools/parity` |
 | `crates/leafcutter-ant/tests/corpus/` | Small projects for the parity harness, each next to the output TS Dash gave for it |
 | `crates/leafcutter-ant/tests/data/` | `fileDefinitions.json` and `packDefinitions.json` from bridge-core/editor-packages at commit `10e360dc`, the data TS Dash fetches at run time |
-| `crates/leafcutter-ant-cli/` | The `leafcutter` binary: arguments in, library call, output out |
+| `crates/leafcutter-ant-cli/` | The `leafcutter` binary: arguments in, library call, output out, and the `~/.dash` cache |
 | `assets/logo.png` | The logo, drawn by grml |
 | `tools/parity/` | The pinned JavaScript that records the vectors, json5's tables and the corpus output |
 | `Cargo.toml` | Workspace members, the shared version, and the lint levels |
