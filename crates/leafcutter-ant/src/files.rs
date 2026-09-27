@@ -118,7 +118,7 @@ impl IncludedFiles {
 
 	/// `query(query)`: an alias, a path, or every file whose path matches the
 	/// query when is-glob calls it a glob. Glob results are cached until the
-	/// next [`IncludedFiles::load_all`](crate::dash).
+	/// next build loads the file list (`loadAll`).
 	pub(crate) fn query(&mut self, globs: &Globs, query: &str) -> Vec<FileId> {
 		if let Some(id) = self.get(query) {
 			return vec![id];
