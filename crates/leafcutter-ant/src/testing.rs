@@ -127,19 +127,24 @@ fn vendored(name: &str) -> crate::json::Value {
 }
 
 /// A development compiler for a project with a behavior and a resource pack
-/// whose plugin list is `plugins`, set up and ready to build.
-pub(crate) fn dash_with(fs: Rc<MemoryFs>, plugins: &str) -> crate::Dash {
+/// whose plugin list is `plugins`, set up and ready to build, and the console
+/// it reports to.
+pub(crate) fn dash_with(
+	fs: Rc<MemoryFs>,
+	plugins: &str,
+) -> (crate::Dash, Rc<crate::console::tests::Recorder>) {
 	let config = format!(
 		r#"{{"packs": {{"behaviorPack": "./BP", "resourcePack": "./RP"}}, "compiler": {{"plugins": {plugins}}}}}"#
 	);
 	fs.files
 		.borrow_mut()
 		.insert("config.json".to_owned(), config.into_bytes());
+	let recorder = Rc::new(crate::console::tests::Recorder::default());
 	let options = crate::DashOptions {
 		config: "./config.json".to_owned(),
 		compiler_config: None,
 		mode: crate::Mode::Development,
-		console: Rc::new(crate::console::tests::Recorder::default()),
+		console: recorder.clone(),
 		verbose: false,
 		pack_types: crate::project::PackTypes::new(vendored("packDefinitions.json"))
 			.expect("pack definitions"),
@@ -151,7 +156,7 @@ pub(crate) fn dash_with(fs: Rc<MemoryFs>, plugins: &str) -> crate::Dash {
 	};
 	let mut dash = crate::Dash::new(fs, None, options);
 	futures_executor::block_on(dash.setup()).expect("setup succeeds");
-	dash
+	(dash, recorder)
 }
 
 /// A vector file as JSON.

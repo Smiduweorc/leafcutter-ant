@@ -198,7 +198,7 @@ mod tests {
 		// so in TS Dash `fileContent.format_version` finds "1.18.30" there and
 		// the output gains `"format_version":"1.18.0"`. leafcutter-ant drops
 		// the key and models no prototype: a recorded difference.
-		let mut dash = dash_with(MemoryFs::with(&[]), r#"["formatVersionCorrection"]"#);
+		let (mut dash, _) = dash_with(MemoryFs::with(&[]), r#"["formatVersionCorrection"]"#);
 		let (cx, plugin) = dash.first_plugin();
 		let source = r#"{"__proto__": {"format_version": "1.18.30"}, "k": 1}"#;
 		let mut data = Data::Value(parse_json5(source).expect("json5"));

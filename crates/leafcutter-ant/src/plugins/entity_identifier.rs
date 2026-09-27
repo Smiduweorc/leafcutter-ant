@@ -67,7 +67,7 @@ mod tests {
 	/// identifiers of every JSON type.
 	#[test]
 	fn ignore_and_aliases_match_ts_dash() {
-		let mut dash = dash_with(MemoryFs::with(&[]), r#"["entityIdentifierAlias"]"#);
+		let (mut dash, _) = dash_with(MemoryFs::with(&[]), r#"["entityIdentifierAlias"]"#);
 		let vectors = plugin_vectors("entityIdentifierAlias");
 		assert!(vectors.len() > 150);
 		let mut failures = Vec::new();

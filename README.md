@@ -134,6 +134,11 @@ separate branch, and this table is that branch's checklist.
 | `simpleRewrite` clears the default pack folder before a build, never the one `packNameSuffix` names, so output under a suffix piles up | `buildStart` unlinks `<packName> <defaultPackPath>` (`SimpleRewrite.ts`) | `a_full_build_clears_the_default_pack_folder_but_not_a_suffixed_one` |
 | A block, item or fog file that json5 cannot read, or that reads as `null`, is copied as it is | `formatVersionCorrection`'s `read` catches the error, logs it on the global console and returns nothing (`FormatVersionCorrection.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`format-version`) |
 | A `format_version` named like a property of `Object.prototype` drops the key, or turns it into `{}` for `__proto__` | `formatVersionMap[version]` looks in a plain object and finds the inherited function, which `JSON.stringify` leaves out (`FormatVersionCorrection.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`format-version`) |
+| `floatPropertyTruncationFix` fixes the first float property of a `player.json` and misses the rest | its `JSON.stringify` replacer pushes the key of every object it enters and never pops it, so later paths carry every key visited before (`FloatPropertyTruncationFix.ts`) | `finalize_build_and_its_console_lines_match_ts_dash` |
+| A float that prints with an exponent, or as `NaN` or `Infinity`, is written as the marker string `"$___dash___floatPropertyTruncationFix___..."` | the marker is replaced by a regular expression that accepts only digits, `.` and `-` | `finalize_build_and_its_console_lines_match_ts_dash` |
+| That marker, written by the project itself anywhere in a `player.json`, is replaced too | the replacement runs over the whole output | `a_marker_is_replaced_only_when_digits_dots_and_minus_signs_follow` |
+| Every entity whose path ends in `player.json`, `myplayer.json` included, is written tab-indented; other entity files are handed on unchanged, which keeps any later `finalizeBuild` plugin from seeing them | `finalizeBuild` tests `endsWith("player.json")` and returns `fileContent` for other entities | `finalize_build_and_its_console_lines_match_ts_dash` |
+| The float fix logs the path of every value in a `player.json`, and every glob test on a number | `console.log` inside the replacer | `finalize_build_and_its_console_lines_match_ts_dash` |
 | A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 
 Where leafcutter-ant differs from TS Dash, and why:
@@ -142,6 +147,7 @@ Where leafcutter-ant differs from TS Dash, and why:
 | --- | --- | --- | --- |
 | A `\u` escape that leaves a lone surrogate, or a config whose `packs` is a string split between the halves of a surrogate pair | keeps it, writes `"\udXXX"` | U+FFFD | Rust strings cannot hold a lone surrogate |
 | Tab-indented output nested more than about 4,000 deep | V8 throws `RangeError` | writes it | the writer does not recurse |
+| The console lines of `floatPropertyTruncationFix` and the parse errors of `formatVersionCorrection` | go to the global `console` | go to the host's `Console` | a library does not print |
 | U+2028 or U+2029 inside a json5 string | json5 prints a warning to the console | reads it silently | a library does not print |
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
 | File or pack definitions that are not an array of objects with a string `id` | takes them and fails later, where a plugin asks for a file type | refused when the host builds `FileTypes` or `PackTypes` | the definitions come from the host, which can report them at startup |

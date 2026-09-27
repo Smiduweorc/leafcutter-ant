@@ -18,7 +18,18 @@ pub enum Indent {
 /// `1.0`; `1e+21`; `-0` as `0`), `NaN` and the infinities as `null`, and only
 /// `"`, `\` and the control characters escaped.
 pub fn stringify(value: &Value, indent: Indent) -> String {
-	write(Root::Value(value), indent, NonFinite::Null)
+	write(Root::Value(value), indent, NonFinite::Null, &|_| None)
+}
+
+/// [`stringify()`] with a replacer that can turn a scalar into a string, as a
+/// `JSON.stringify` replacer function that only replaces primitives does.
+/// `replace` is called with each scalar, which it can recognise by address.
+pub(crate) fn stringify_replacing(
+	value: &Value,
+	indent: Indent,
+	replace: &dyn Fn(&Value) -> Option<String>,
+) -> String {
+	write(Root::Value(value), indent, NonFinite::Null, replace)
 }
 
 /// What is written for `NaN` and the infinities.
@@ -37,18 +48,23 @@ pub(super) enum Root<'a> {
 	Object(&'a Object),
 }
 
-pub(super) fn write(root: Root<'_>, indent: Indent, non_finite: NonFinite) -> String {
+pub(super) fn write(
+	root: Root<'_>,
+	indent: Indent,
+	non_finite: NonFinite,
+	replace: &dyn Fn(&Value) -> Option<String>,
+) -> String {
 	let mut out = String::new();
 	let mut open: Vec<Open<'_>> = Vec::new();
 	open.extend(match root {
-		Root::Value(value) => write_value(&mut out, value, non_finite),
+		Root::Value(value) => write_value(&mut out, value, non_finite, replace),
 		Root::Array(array) => open_array(&mut out, array),
 		Root::Object(object) => open_object(&mut out, object),
 	});
 	let mut next = None;
 	loop {
 		if let Some(value) = next.take()
-			&& let Some(container) = write_value(&mut out, value, non_finite)
+			&& let Some(container) = write_value(&mut out, value, non_finite, replace)
 		{
 			open.push(container);
 		}
@@ -103,7 +119,18 @@ enum Open<'a> {
 
 /// Writes a scalar or an empty container whole, or writes the opening bracket
 /// of a non-empty container and returns it to be filled.
-fn write_value<'a>(out: &mut String, value: &'a Value, non_finite: NonFinite) -> Option<Open<'a>> {
+fn write_value<'a>(
+	out: &mut String,
+	value: &'a Value,
+	non_finite: NonFinite,
+	replace: &dyn Fn(&Value) -> Option<String>,
+) -> Option<Open<'a>> {
+	if !matches!(value, Value::Array(_) | Value::Object(_))
+		&& let Some(replacement) = replace(value)
+	{
+		quote(out, &replacement);
+		return None;
+	}
 	match value {
 		Value::Null => out.push_str("null"),
 		Value::Bool(true) => out.push_str("true"),

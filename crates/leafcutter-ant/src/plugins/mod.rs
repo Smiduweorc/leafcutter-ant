@@ -2,6 +2,7 @@
 //! uses for them.
 
 mod entity_identifier;
+mod float_fix;
 mod format_version;
 mod rewrite_for_packaging;
 mod simple_rewrite;
@@ -22,6 +23,9 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 	match id {
 		"entityIdentifierAlias" => {
 			BuiltIn::Plugin(Box::new(entity_identifier::EntityIdentifierAlias))
+		}
+		"floatPropertyTruncationFix" => {
+			BuiltIn::Plugin(Box::new(float_fix::FloatPropertyTruncationFix))
 		}
 		"formatVersionCorrection" => {
 			BuiltIn::Plugin(Box::new(format_version::FormatVersionCorrection::new(cx)))

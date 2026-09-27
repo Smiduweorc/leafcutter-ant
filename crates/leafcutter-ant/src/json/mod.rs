@@ -16,6 +16,7 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 
 pub use json5::{Json5Error, Json5ErrorKind, parse_json5};
+pub(crate) use stringify::stringify_replacing;
 pub use stringify::{Indent, stringify};
 
 use stringify::{NonFinite, Root};
@@ -199,7 +200,7 @@ fn debug(root: Root<'_>, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 	} else {
 		Indent::None
 	};
-	f.write_str(&stringify::write(root, indent, NonFinite::Name))
+	f.write_str(&stringify::write(root, indent, NonFinite::Name, &|_| None))
 }
 
 impl fmt::Debug for Value {
