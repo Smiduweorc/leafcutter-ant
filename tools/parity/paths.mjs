@@ -47,7 +47,7 @@ function record(version, lib, fn, args) {
 const inputs = [...fixed]
 for (let i = 0; i < 600; i++) inputs.push(randomPath())
 for (const p of inputs) {
-	for (const fn of ["normalize", "dirname", "basename", "extname", "isAbsolute", "resolve"]) {
+	for (const fn of ["normalize", "dirname", "basename", "isAbsolute", "resolve"]) {
 		record("2.0.2", pathe2, fn, [p])
 	}
 	record("1.1.2", pathe1, "extname", [p])

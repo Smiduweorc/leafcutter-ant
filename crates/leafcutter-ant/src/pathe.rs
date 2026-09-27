@@ -1,7 +1,7 @@
 //! Ports of the two pathe versions in TS Dash's dependency tree. The functions
 //! at the top level are pathe 2.0.2, which Dash imports; [`v1`] holds the two
-//! functions where pathe 1.1.2, which mc-project-core imports, returns
-//! something else.
+//! functions of pathe 1.1.2, which mc-project-core imports, that return
+//! something else. Only the functions Dash and mc-project-core call are here.
 //!
 //! JavaScript strings are UTF-16 and these are UTF-8, but pathe only ever
 //! looks for `/`, `\`, `.` and `:`, which are ASCII, so indexing bytes finds
@@ -265,29 +265,17 @@ pub(crate) fn basename(path: &str, extension: Option<&str>) -> String {
 	}
 }
 
-/// pathe 2.0.2's `extname`: `/.(\.[^./]+|\.)$/`, and `""` for `".."`.
-pub(crate) fn extname(path: &str) -> String {
-	if path == ".." {
-		return String::new();
-	}
-	extension_match(&normalize_windows_path(path), true)
-}
-
-/// The group `_EXTNAME_RE` captures. The regular expression can only end at
-/// the last `.`, so this finds that dot and checks the rest of the pattern
-/// around it: the `.` before the group matches any character but a line
-/// terminator, and the group is the dot plus everything after it, which must
-/// hold no `/` (and, for pathe 1.1.2, at least one character).
-fn extension_match(path: &str, allow_trailing_dot: bool) -> String {
+/// The group pathe 1.1.2's `/.(\.[^./]+)$/` captures. The regular expression
+/// can only end at the last `.`, so this finds that dot and checks the rest
+/// of the pattern around it: the `.` before the group matches any character
+/// but a line terminator, and after the dot come one or more characters
+/// with no `/`.
+fn extension_match(path: &str) -> String {
 	let Some(dot) = path.rfind('.') else {
 		return String::new();
 	};
 	let rest = &path[dot + 1..];
-	let group_matches = if rest.is_empty() {
-		allow_trailing_dot
-	} else {
-		!rest.contains('/')
-	};
+	let group_matches = !rest.is_empty() && !rest.contains('/');
 	let preceded = path[..dot]
 		.chars()
 		.next_back()
@@ -322,7 +310,7 @@ pub(crate) mod v1 {
 	/// pathe 1.1.2's `extname`: `/.(\.[^./]+)$/`, so a trailing dot is no
 	/// extension and `".."` gets no special case.
 	pub(crate) fn extname(path: &str) -> String {
-		extension_match(&normalize_windows_path(path), false)
+		extension_match(&normalize_windows_path(path))
 	}
 }
 
@@ -338,7 +326,7 @@ mod tests {
 		let text = std::fs::read_to_string(path).expect("paths.json is readable");
 		let vectors: Vec<(String, String, Vec<String>, serde_json::Value)> =
 			serde_json::from_str(&text).expect("paths.json is well formed");
-		assert!(vectors.len() > 6000);
+		assert!(vectors.len() > 5000);
 		let mut failures = Vec::new();
 		for (version, function, args, expected) in &vectors {
 			let a: Vec<&str> = args.iter().map(String::as_str).collect();
@@ -346,7 +334,6 @@ mod tests {
 				("2.0.2", "normalize") => normalize(a[0]).into(),
 				("2.0.2", "dirname") => dirname(a[0]).into(),
 				("2.0.2", "basename") => basename(a[0], a.get(1).copied()).into(),
-				("2.0.2", "extname") => extname(a[0]).into(),
 				("2.0.2", "isAbsolute") => is_absolute(a[0]).into(),
 				("2.0.2", "resolve") => resolve(&a).into(),
 				("2.0.2", "relative") => relative(a[0], a[1]).into(),
@@ -371,23 +358,20 @@ mod tests {
 	}
 
 	#[test]
-	fn the_two_versions_disagree_on_join_and_extname() {
+	fn pathe_1_joins_and_reads_extensions_its_own_way() {
 		assert_eq!(join(&["//a"]), "//a");
 		assert_eq!(v1::join(&["//a"]), "/a");
 		assert_eq!(join(&[]), ".");
 		assert_eq!(v1::join(&[]), ".");
-		assert_eq!(extname("file."), ".");
 		assert_eq!(v1::extname("file."), "");
-		assert_eq!(extname("a/.."), ".");
 		assert_eq!(v1::extname("a/.."), "");
-		assert_eq!(extname(".."), "");
 		assert_eq!(v1::extname(".."), "");
 	}
 
 	#[test]
 	fn a_dot_after_a_line_break_starts_no_extension() {
-		assert_eq!(extname("a\n.txt"), "");
-		assert_eq!(extname("a\u{2028}.txt"), "");
-		assert_eq!(extname("a .txt"), ".txt");
+		assert_eq!(v1::extname("a\n.txt"), "");
+		assert_eq!(v1::extname("a\u{2028}.txt"), "");
+		assert_eq!(v1::extname("a .txt"), ".txt");
 	}
 }
