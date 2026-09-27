@@ -39,7 +39,7 @@ async function plugin(id) {
 const encode = (result, content) => (result === undefined ? "<undefined>" : result === content ? "<fileContent>" : result)
 
 const entityPaths = ["BP/entities/a.json", "BP/entities/sub/b.json", "BP/items/i.json", "RP/entity/c.json", "BP/entities/x.txt", "config.json", "BP/entities/player.json"]
-const identifiers = ["ns:a", "", 0, 5, -0, true, false, null, { a: 1 }, [1], [], " ", "é:\u{1f41c}"]
+const identifiers = ["ns:a", "", 0, 5, -0, true, false, null, { a: 1 }, [1], [], " ", "\u00e9:\u{1f41c}"]
 const entityContents = [
 	...identifiers.map((identifier) => ({ "minecraft:entity": { description: { identifier } } })),
 	{ "minecraft:entity": { description: {} } },
