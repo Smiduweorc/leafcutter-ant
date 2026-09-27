@@ -11,19 +11,12 @@ pub mod console;
 mod dash;
 mod files;
 pub mod fs;
-// The built-in plugins, which land one per commit after the pipeline, are
-// what calls the rest of these; each `expect` turns into a warning once every
-// item in its module has a caller.
-#[cfg_attr(not(test), expect(dead_code))]
 mod glob;
 mod js;
 pub mod json;
-#[cfg_attr(not(test), expect(dead_code))]
 mod pathe;
-#[expect(dead_code)]
 mod plugin;
 mod plugins;
-#[expect(dead_code)]
 pub mod project;
 #[cfg(test)]
 mod testing;

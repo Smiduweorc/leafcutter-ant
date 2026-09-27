@@ -149,6 +149,15 @@ pub(crate) enum Finalized {
 
 /// An entry an `include` hook returns: a path, or `[path, { isVirtual }]`.
 pub(crate) enum Include {
+	/// Only JavaScript plugins return plain paths; the built-ins return
+	/// entries.
+	#[cfg_attr(
+		not(test),
+		expect(
+			dead_code,
+			reason = "JavaScript plugins, which arrive with the embedded runtime, return plain paths"
+		)
+	)]
 	Path(String),
 	Entry(String, bool),
 }
@@ -347,13 +356,6 @@ impl OptionValue<'_> {
 			self,
 			OptionValue::Undefined | OptionValue::Value(Value::Null)
 		)
-	}
-
-	pub(crate) fn value(&self) -> Option<&Value> {
-		match self {
-			OptionValue::Value(value) => Some(value),
-			_ => None,
-		}
 	}
 }
 

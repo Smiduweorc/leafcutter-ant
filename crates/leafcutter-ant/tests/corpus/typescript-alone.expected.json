@@ -1,0 +1,41 @@
+{
+	"production": {
+		"written": {
+			"BP/scripts/broken.js": "const x: = 1\n",
+			"BP/scripts/crlf.js": "export const a = 1;\n",
+			"BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/broken.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/crlf.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/plain.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/types.d.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"BP/scripts/broken.js": "const x: = 1\n",
+			"BP/scripts/crlf.js": "export const a = 1;\n",
+			"BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"BP/scripts/broken.js": "const x: = 1\n",
+			"BP/scripts/crlf.js": "export const a = 1;\n",
+			"BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/broken.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/crlf.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/plain.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/types.d.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"BP/scripts/broken.js": "const x: = 1\n",
+			"BP/scripts/crlf.js": "export const a = 1;\n",
+			"BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n"
+		}
+	}
+}

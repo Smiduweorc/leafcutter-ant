@@ -1,0 +1,49 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/Bridge BP/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/Bridge BP/scripts/broken.js": "const x: = 1\n",
+			"builds/dist/Bridge BP/scripts/crlf.js": "export const a = 1;\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImNybGYudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGNvbnN0IGE6IG51bWJlciA9IDFcclxuIl0sIm5hbWVzIjpbImEiXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sTUFBTUEsSUFBWSxFQUFDIn0=",
+			"builds/dist/Bridge BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm1haW4udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgd29ybGQgfSBmcm9tICdAbWluZWNyYWZ0L3NlcnZlcidcbmVudW0gTW9kZSB7IEEsIEIgfVxuZXhwb3J0IGNvbnN0IG06IE1vZGUgPSBNb2RlLkJcbndvcmxkLnNlbmRNZXNzYWdlKGAke219YClcbiJdLCJuYW1lcyI6WyJ3b3JsZCIsIk1vZGUiLCJtIiwic2VuZE1lc3NhZ2UiXSwibWFwcGluZ3MiOiJBQUFBLFNBQVNBLEtBQUssUUFBUSxvQkFBbUI7O1VBQ3BDQzs7O0dBQUFBLFNBQUFBO0FBQ0wsT0FBTyxNQUFNQyxNQUFnQjtBQUM3QkYsTUFBTUcsV0FBVyxDQUFDLENBQUMsRUFBRUQsRUFBRSxDQUFDIn0=",
+			"builds/dist/Bridge BP/scripts/plain.js": "console.log(1)\n"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/broken.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/crlf.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/plain.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/types.d.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dev/Bridge BP/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dev/Bridge BP/scripts/broken.js": "const x: = 1\n",
+			"builds/dev/Bridge BP/scripts/crlf.js": "export const a = 1;\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImNybGYudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGNvbnN0IGE6IG51bWJlciA9IDFcclxuIl0sIm5hbWVzIjpbImEiXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sTUFBTUEsSUFBWSxFQUFDIn0=",
+			"builds/dev/Bridge BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm1haW4udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgd29ybGQgfSBmcm9tICdAbWluZWNyYWZ0L3NlcnZlcidcbmVudW0gTW9kZSB7IEEsIEIgfVxuZXhwb3J0IGNvbnN0IG06IE1vZGUgPSBNb2RlLkJcbndvcmxkLnNlbmRNZXNzYWdlKGAke219YClcbiJdLCJuYW1lcyI6WyJ3b3JsZCIsIk1vZGUiLCJtIiwic2VuZE1lc3NhZ2UiXSwibWFwcGluZ3MiOiJBQUFBLFNBQVNBLEtBQUssUUFBUSxvQkFBbUI7O1VBQ3BDQzs7O0dBQUFBLFNBQUFBO0FBQ0wsT0FBTyxNQUFNQyxNQUFnQjtBQUM3QkYsTUFBTUcsV0FBVyxDQUFDLENBQUMsRUFBRUQsRUFBRSxDQUFDIn0=",
+			"builds/dev/Bridge BP/scripts/plain.js": "console.log(1)\n"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/Bridge BP/manifest.json": "{\"format_version\": 2}\n",
+			"builds/dist/Bridge BP/scripts/broken.js": "const x: = 1\n",
+			"builds/dist/Bridge BP/scripts/crlf.js": "export const a = 1;\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImNybGYudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGNvbnN0IGE6IG51bWJlciA9IDFcclxuIl0sIm5hbWVzIjpbImEiXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sTUFBTUEsSUFBWSxFQUFDIn0=",
+			"builds/dist/Bridge BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm1haW4udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgd29ybGQgfSBmcm9tICdAbWluZWNyYWZ0L3NlcnZlcidcbmVudW0gTW9kZSB7IEEsIEIgfVxuZXhwb3J0IGNvbnN0IG06IE1vZGUgPSBNb2RlLkJcbndvcmxkLnNlbmRNZXNzYWdlKGAke219YClcbiJdLCJuYW1lcyI6WyJ3b3JsZCIsIk1vZGUiLCJtIiwic2VuZE1lc3NhZ2UiXSwibWFwcGluZ3MiOiJBQUFBLFNBQVNBLEtBQUssUUFBUSxvQkFBbUI7O1VBQ3BDQzs7O0dBQUFBLFNBQUFBO0FBQ0wsT0FBTyxNQUFNQyxNQUFnQjtBQUM3QkYsTUFBTUcsV0FBVyxDQUFDLENBQUMsRUFBRUQsRUFBRSxDQUFDIn0=",
+			"builds/dist/Bridge BP/scripts/plain.js": "console.log(1)\n"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/broken.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/crlf.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/main.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/plain.js\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/scripts/types.d.ts\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"development_behavior_packs/Bridge BP/manifest.json": "{\"format_version\": 2}\n",
+			"development_behavior_packs/Bridge BP/scripts/broken.js": "const x: = 1\n",
+			"development_behavior_packs/Bridge BP/scripts/crlf.js": "export const a = 1;\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImNybGYudHMiXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGNvbnN0IGE6IG51bWJlciA9IDFcclxuIl0sIm5hbWVzIjpbImEiXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sTUFBTUEsSUFBWSxFQUFDIn0=",
+			"development_behavior_packs/Bridge BP/scripts/main.js": "import { world } from '@minecraft/server';\nvar Mode;\n(function(Mode) {\n    Mode[Mode[\"A\"] = 0] = \"A\";\n    Mode[Mode[\"B\"] = 1] = \"B\";\n})(Mode || (Mode = {}));\nexport const m = 1;\nworld.sendMessage(`${m}`);\n\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm1haW4udHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgd29ybGQgfSBmcm9tICdAbWluZWNyYWZ0L3NlcnZlcidcbmVudW0gTW9kZSB7IEEsIEIgfVxuZXhwb3J0IGNvbnN0IG06IE1vZGUgPSBNb2RlLkJcbndvcmxkLnNlbmRNZXNzYWdlKGAke219YClcbiJdLCJuYW1lcyI6WyJ3b3JsZCIsIk1vZGUiLCJtIiwic2VuZE1lc3NhZ2UiXSwibWFwcGluZ3MiOiJBQUFBLFNBQVNBLEtBQUssUUFBUSxvQkFBbUI7O1VBQ3BDQzs7O0dBQUFBLFNBQUFBO0FBQ0wsT0FBTyxNQUFNQyxNQUFnQjtBQUM3QkYsTUFBTUcsV0FBVyxDQUFDLENBQUMsRUFBRUQsRUFBRSxDQUFDIn0=",
+			"development_behavior_packs/Bridge BP/scripts/plain.js": "console.log(1)\n"
+		}
+	}
+}

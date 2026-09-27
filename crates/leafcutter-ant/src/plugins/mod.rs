@@ -7,6 +7,7 @@ mod float_fix;
 mod format_version;
 mod rewrite_for_packaging;
 mod simple_rewrite;
+mod typescript;
 
 use crate::plugin::{Context, Options, Plugin};
 
@@ -35,6 +36,7 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 		"rewriteForPackaging" => BuiltIn::Plugin(Box::new(
 			rewrite_for_packaging::RewriteForPackaging::new(cx, options),
 		)),
+		"typeScript" => BuiltIn::Plugin(Box::new(typescript::TypeScript::new(cx, options))),
 		"simpleRewrite" => {
 			BuiltIn::Plugin(Box::new(simple_rewrite::SimpleRewrite::new(cx, options)))
 		}

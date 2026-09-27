@@ -19,8 +19,11 @@ of the json5 2.2.1 reader Dash bundles, and a writer that matches V8's
 uses, and the compiler pipeline with its plugin host and cache file. The
 built-in plugins come next; plugins written in JavaScript need an embedded
 JavaScript runtime, which comes after them. The library's runtime
-dependencies are `indexmap`, `ryu-js`, `regress` and `futures-util`, each
-with its reason in `Cargo.toml`, and it does nothing until it is called.
+dependencies are `indexmap`, `ryu-js`, `regress`, `futures-util`, `swc`,
+`swc_common` and `serde_json`, each with its reason in `Cargo.toml`, and it
+does nothing until it is called. `Cargo.lock` holds swc and the crates around
+it at the versions swc 1.6.5 was released with; do not let `cargo update`
+move them.
 
 ## leafcutter-ant is not for you if you
 
@@ -46,7 +49,8 @@ loads, at the versions TS Dash's lockfile resolves, and Node through
 | `numbers.json` | V8's `JSON.stringify` of hand-picked and random f64 values |
 | `stringify.json` | V8's `JSON.stringify` of random documents, compact and tab-indented |
 | `json5.json` | json5 2.2.1's `parse` of edge cases, random json5 and damaged json5: results and error messages |
-| `paths.json` | pathe 2.0.2 (which Dash imports) and pathe 1.1.2 (which mc-project-core imports) on edge cases and random paths |
+| `paths.json` | the functions of pathe 2.0.2 (which Dash imports) and pathe 1.1.2 (which mc-project-core imports) that each calls, on edge cases and random paths |
+| `typescript.json` | @swc/wasm-web 1.6.5 on the sources in `tools/parity/typescript/`, with the options Dash's `typeScript` plugin passes, with and without inline source maps |
 | `globs.json` | the picomatch that common-utils vendors: the regex source it builds for every file definition matcher, the float fix's globs and random globs, whether V8 compiles that source, and `isMatch` on paths built to match and paths that should not |
 | `is-glob.json` | is-glob 4.0.3 on the same globs and on random strings |
 | `plugins.json` | TS Dash's own `entityIdentifierAlias` and `floatPropertyTruncationFix`, taken out of a real setup and called hook by hook, for input the non-JavaScript corpus cannot give them because no built-in there reads the files they look at |
@@ -142,6 +146,7 @@ separate branch, and this table is that branch's checklist.
 | `contentsFile` writes every file of a pack as the pack's file list and never writes `contents.json` | `read` and `finalizeBuild` return early for `contents.json` instead of for every other file (`ContentsFile.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`contents-file`, `contents-then-rewrite`, `float-fix-then-contents`) |
 | The list holds the path each `transformPath` call was given, `contents.json` included; a file an earlier plugin already moved out of the pack is left out | `transformPath` pushes its argument and looks up the pack by it | `every_corpus_project_builds_as_ts_dash_builds_it` (`rewrite-then-contents`) |
 | Every build in a session appends the whole pack to the list again | the list is filled in `transformPath` and never emptied, and plugins live from setup to setup | `every_build_in_a_session_appends_the_whole_pack_again` |
+| A `.ts` file swc refuses is written to its `.js` path as the TypeScript source | the `load` hook throws, the host catches it, the data stays the source text, and `finalizeBuild` returns any string (`TypeScript.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`typescript`) |
 | A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 
 Where leafcutter-ant differs from TS Dash, and why:

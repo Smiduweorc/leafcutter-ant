@@ -1,0 +1,16 @@
+{
+	"packs": {
+		"behaviorPack": "./BP"
+	},
+	"compiler": {
+		"plugins": [
+			[
+				"typeScript",
+				{
+					"inlineSourceMap": true
+				}
+			],
+			"simpleRewrite"
+		]
+	}
+}

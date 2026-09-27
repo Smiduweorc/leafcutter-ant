@@ -16,10 +16,23 @@ futures-util = { version = "0.3", default-features = false, features = ["alloc"]
 # RegExp#exec does outside unicode mode.
 regress = { version = "0.12.0", features = ["utf16"] }
 # Keeps object keys in insertion order with O(1) lookup; JavaScript property
-# order is built on top of it in src/json/mod.rs.
-indexmap = "2.14"
+# order is built on top of it in src/json/mod.rs. The floor is 2.5 because swc
+# 0.278.1 needs indexmap 2.5.0 locked (see swc below).
+indexmap = "2.5"
 # Number#toString exactly as ECMAScript specifies it, from the Boa engine.
 ryu-js = "1.0.3"
+# The TypeScript compiler of the typeScript plugin. 0.278.1 is the swc crate
+# @swc/wasm-web 1.6.5 is built from, so the output matches TS Dash byte for
+# byte. Cargo.lock pins every swc_* crate to the version in swc's own v1.6.5
+# lockfile, and the crates swc_common 0.34 needs at old versions: serde and
+# serde_derive 1.0.219 (1.0.220 removed the serde::__private module it uses),
+# serde_json 1.0.115, indexmap 2.5.0 and semver 1.0.21. Do not let
+# `cargo update` move them.
+swc = "=0.278.1"
+swc_common = "0.34"
+# swc's options are built from the same JSON the plugin hands @swc/wasm-web;
+# swc depends on serde_json already.
+serde_json = "1.0.115"
 
 [dev-dependencies]
 # Runs the file system's futures to completion in tests; the library itself
@@ -27,7 +40,8 @@ ryu-js = "1.0.3"
 futures-executor = "0.3"
 # Reads the golden vectors. preserve_order keeps keys in source order and
 # float_roundtrip parses numbers correctly rounded, as JSON.parse does.
-serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
+# 1.0.115 is the version swc needs locked.
+serde_json = { version = "1.0.115", features = ["preserve_order", "float_roundtrip"] }
 
 [lints]
 workspace = true
