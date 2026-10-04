@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 use crate::js::{self, Prop};
 use crate::json::{Indent, Value, stringify_replacing};
-use crate::plugin::{Context, Data, Finalized, Hook, Plugin};
+use crate::plugin::{Context, Data, Finalized, Hook, HookFuture, Plugin, ready};
 
 const MARKER: &str =
 	"$___dash___floatPropertyTruncationFix___THIS IS AUTO GENERATED AND I HATE IT___";
@@ -172,23 +172,14 @@ fn replace_markers(output: &str) -> String {
 	result
 }
 
-impl Plugin for FloatPropertyTruncationFix {
-	fn hooks(&self) -> &[Hook] {
-		&[Hook::FinalizeBuild]
-	}
-
+impl FloatPropertyTruncationFix {
 	/// Entity files only: `player.json` (any path ending in it) is written
 	/// with the fix, other entities are handed on as they are, and every other
 	/// file is left to the next plugin.
-	fn finalize_build(
-		&mut self,
-		cx: &Context,
-		path: &str,
-		data: &Data,
-	) -> Result<Finalized, String> {
+	fn finalize_build(&self, cx: &Context, path: &str, data: &Data) -> Result<Finalized, String> {
 		if cx
 			.file_types
-			.id(&cx.project, path)
+			.id(&cx.project(), path)
 			.map_err(|e| e.to_string())?
 			!= "entity"
 		{
@@ -201,13 +192,40 @@ impl Plugin for FloatPropertyTruncationFix {
 			Data::Value(Value::String(_)) => return Ok(Finalized::Current),
 			Data::Value(value) => json_stringify_with_float_fix(cx, value),
 			Data::Shared(value) => json_stringify_with_float_fix(cx, &value.borrow()),
+			// A script's value, as the JSON JSON.stringify sees in it.
+			Data::Js(_) => match data.json(cx)? {
+				Some(value) => json_stringify_with_float_fix(cx, &value),
+				None => {
+					return Err(
+						"TypeError: Cannot read properties of undefined (reading 'replaceAll')"
+							.to_owned(),
+					);
+				}
+			},
 		};
 		Ok(Finalized::Data(Data::Value(Value::String(json))))
 	}
 }
 
+impl Plugin for FloatPropertyTruncationFix {
+	fn hooks(&self) -> &[Hook] {
+		&[Hook::FinalizeBuild]
+	}
+
+	fn finalize_build<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Finalized> {
+		ready(self.finalize_build(cx, path, data))
+	}
+}
+
 #[cfg(test)]
 mod tests {
+	use futures_executor::block_on;
+
 	use super::*;
 	use crate::testing::{MemoryFs, dash_with, plugin_vectors, value};
 
@@ -216,22 +234,22 @@ mod tests {
 	/// entity documents and paths in and out of the entities folder.
 	#[test]
 	fn finalize_build_and_its_console_lines_match_ts_dash() {
-		let (mut dash, recorder) =
-			dash_with(MemoryFs::with(&[]), r#"["floatPropertyTruncationFix"]"#);
+		let (dash, recorder) = dash_with(MemoryFs::with(&[]), r#"["floatPropertyTruncationFix"]"#);
 		let vectors = plugin_vectors("floatPropertyTruncationFix");
 		assert!(vectors.len() > 150);
 		let mut failures = Vec::new();
 		for vector in &vectors {
 			let path = vector[0].as_str().expect("a path");
 			recorder.0.borrow_mut().clear();
-			let data = Data::Value(value(&vector[1]));
+			let mut data = Data::Value(value(&vector[1]));
 			let (cx, plugin) = dash.first_plugin();
-			let result = match plugin.finalize_build(cx, path, &data).expect("no error") {
-				Finalized::Undefined => serde_json::json!("<undefined>"),
-				Finalized::Current => serde_json::json!("<fileContent>"),
-				Finalized::Data(Data::Value(Value::String(s))) => serde_json::Value::String(s),
-				Finalized::Data(_) => panic!("finalizeBuild gives a string"),
-			};
+			let result =
+				match block_on(plugin.finalize_build(cx, path, &mut data)).expect("no error") {
+					Finalized::Undefined => serde_json::json!("<undefined>"),
+					Finalized::Current => serde_json::json!("<fileContent>"),
+					Finalized::Data(Data::Value(Value::String(s))) => serde_json::Value::String(s),
+					Finalized::Data(_) => panic!("finalizeBuild gives a string"),
+				};
 			let logged: Vec<serde_json::Value> = recorder
 				.0
 				.borrow()

@@ -14,10 +14,42 @@ use crate::plugin::{Context, Options, Plugin};
 /// What a plugin list entry names.
 pub(crate) enum BuiltIn {
 	Plugin(Box<dyn Plugin>),
-	/// A built-in plugin that runs user JavaScript, which leafcutter-ant
-	/// cannot do yet.
-	NeedsJavaScript,
+	/// A built-in plugin that runs user JavaScript, which runs in the engine
+	/// as the factory the layer exports under this name.
+	#[expect(
+		dead_code,
+		reason = "generatorScripts and customCommands switch it on as each is checked against TS Dash"
+	)]
+	JavaScript(&'static str),
 	Unknown,
+}
+
+/// Whether `builtInPlugins[id]` exists here.
+pub(crate) enum Status {
+	Ported,
+	/// A built-in of TS Dash that leafcutter-ant does not have yet.
+	NotPorted,
+	Unknown,
+}
+
+pub(crate) fn status(id: &str) -> Status {
+	match id {
+		"contentsFile"
+		| "entityIdentifierAlias"
+		| "floatPropertyTruncationFix"
+		| "formatVersionCorrection"
+		| "rewriteForPackaging"
+		| "typeScript"
+		| "simpleRewrite" => Status::Ported,
+		"customCommands"
+		| "generatorScripts"
+		| "moLang"
+		| "molang"
+		| "customEntityComponents"
+		| "customItemComponents"
+		| "customBlockComponents" => Status::NotPorted,
+		_ => Status::Unknown,
+	}
 }
 
 /// `builtInPlugins[id]`, created with its context and options.
@@ -40,13 +72,6 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 		"simpleRewrite" => {
 			BuiltIn::Plugin(Box::new(simple_rewrite::SimpleRewrite::new(cx, options)))
 		}
-		"moLang"
-		| "molang"
-		| "customEntityComponents"
-		| "customItemComponents"
-		| "customBlockComponents"
-		| "customCommands"
-		| "generatorScripts" => BuiltIn::NeedsJavaScript,
 		_ => BuiltIn::Unknown,
 	}
 }

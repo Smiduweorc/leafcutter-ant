@@ -15,6 +15,7 @@ use std::fmt;
 use std::mem;
 use std::ops::{Deref, DerefMut};
 
+pub(crate) use json5::parse_json_text;
 pub use json5::{Json5Error, Json5ErrorKind, parse_json5};
 pub(crate) use stringify::stringify_replacing;
 pub use stringify::{Indent, stringify};

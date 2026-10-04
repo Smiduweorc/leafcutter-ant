@@ -7,26 +7,41 @@
 //! `ignore` and `transformPath` hooks of every file, then the reads, which
 //! run concurrently, then `read`, `load` and `registerAliases` file by file,
 //! then `require` for every file once all aliases exist.
+//!
+//! Plugins reach back into the compiler while their hooks run (a script's
+//! `compileFiles` compiles more files from inside `buildEnd`), so the
+//! compiler is shared: its state sits in cells, and no borrow of it is held
+//! while a hook runs.
 
+use std::cell::RefCell;
 use std::fmt;
-use std::rc::Rc;
+use std::future::Future;
+use std::pin::Pin;
+use std::rc::{Rc, Weak};
 use std::time::Instant;
 
 use futures_util::future::join_all;
 use indexmap::{IndexMap, IndexSet};
 
 use crate::console::{Console, Logger, Progress};
-use crate::files::{FileId, IncludedFiles};
+use crate::files::{AliasKey, FileId, IncludedFiles};
 use crate::fs::{self, FileSystem, FsError};
-use crate::glob::Globs;
+use crate::js::engine::{Counted, Engine, Host, HttpsImports, ScriptTimeLimit};
 use crate::js::{self, Prop};
 use crate::json::{Object, Value};
 use crate::pathe;
 use crate::plugin::{
-	BuildType, Context, FileHandle, Finalized, Hook, Include, Mode, Options, Plugins, is_nullish,
+	BuildType, Context, Data, Dependencies, FileHandle, Finalized, Hook, Include, Mode, Options,
+	Output, Plugin, Plugins, is_nullish, poll_all, yield_now,
 };
 use crate::plugins::{self, BuiltIn};
 use crate::project::{FileTypes, PackTypes, ProjectConfig};
+
+/// The host's `requestJsonData`: the JSON at a path such as
+/// `data/packages/minecraftBedrock/location/validCommand.json`, which the
+/// Deno CLI fetches from bridge-core/editor-packages and caches. `Err` is the
+/// message of what the host threw.
+pub type RequestJsonData = Rc<dyn Fn(&str) -> Pin<Box<dyn Future<Output = Result<Value, String>>>>>;
 
 /// What a host sets a compiler up with: TS Dash's `IDashOptions`.
 pub struct DashOptions {
@@ -47,6 +62,12 @@ pub struct DashOptions {
 	pub pack_types: PackTypes,
 	/// The file definitions.
 	pub file_types: FileTypes,
+	/// Data the custom commands plugin asks for.
+	pub request_json_data: RequestJsonData,
+	/// How a script's `import` of an `https://` URL is fetched.
+	pub https_imports: HttpsImports,
+	/// How long a script may run without returning.
+	pub script_time_limit: ScriptTimeLimit,
 }
 
 /// Why setting up or building stopped. Everything else a plugin or a file
@@ -65,6 +86,10 @@ pub enum DashError {
 	CompilerNull,
 	/// The cache file could not be written.
 	CacheFile(FsError),
+	/// A script's data for a file could not be written: `JSON.stringify`
+	/// threw (a cycle, a BigInt, a throwing `toJSON`), which stops TS Dash's
+	/// build.
+	Output(String, String),
 }
 
 impl fmt::Display for DashError {
@@ -76,6 +101,9 @@ impl fmt::Display for DashError {
 			DashError::PluginList(message) => write!(f, "cannot read the plugin list: {message}"),
 			DashError::CompilerNull => f.write_str("the project config's \"compiler\" is null"),
 			DashError::CacheFile(error) => write!(f, "cannot write the cache file: {error}"),
+			DashError::Output(path, message) => {
+				write!(f, "cannot write the data of {path}: {message}")
+			}
 		}
 	}
 }
@@ -84,12 +112,21 @@ impl std::error::Error for DashError {}
 
 /// A compiler for one project.
 pub struct Dash {
-	cx: Context,
-	config_path: String,
-	compiler_config: Option<String>,
-	plugins: Plugins,
-	files: IncludedFiles,
-	progress: Progress,
+	compiler: Rc<Compiler>,
+}
+
+/// The compiler's state, shared with the plugin context.
+pub(crate) struct Compiler {
+	pub(crate) config_path: String,
+	pub(crate) compiler_config: RefCell<Option<String>>,
+	pub(crate) plugins: RefCell<Rc<Plugins>>,
+	pub(crate) files: RefCell<IncludedFiles>,
+	pub(crate) progress: Progress,
+	/// Copies started while loading files, which `compileIncludedFiles`
+	/// waits for at its end (`awaitAllFilesCopied`): output path to source.
+	copies: RefCell<IndexMap<String, String>>,
+	/// Last, so that everything holding engine handles goes first.
+	pub(crate) cx: Context,
 }
 
 impl Dash {
@@ -97,59 +134,124 @@ impl Dash {
 	/// `output_fs`, or to `fs` when there is none. Plugins can tell the two
 	/// cases apart: a separate output file system means the output goes to a
 	/// `com.mojang` folder.
+	///
+	/// # Panics
+	///
+	/// When the script engine cannot be created, which happens only when
+	/// memory runs out.
 	pub fn new(
 		fs: Rc<dyn FileSystem>,
 		output_fs: Option<Rc<dyn FileSystem>>,
 		options: DashOptions,
 	) -> Self {
+		let has_com_mojang_directory = output_fs.is_some();
 		let output_fs = output_fs.unwrap_or_else(|| Rc::clone(&fs));
 		let project_root = pathe::dirname(&options.config);
-		let cx = Context {
-			has_com_mojang_directory: !Rc::ptr_eq(&fs, &output_fs),
-			fs,
-			output_fs,
-			logger: Logger::new(options.console, options.verbose),
-			project: ProjectConfig::new(project_root.clone(), Value::Object(Object::new())),
-			project_root,
-			pack_types: options.pack_types,
-			file_types: options.file_types,
-			globs: Globs::default(),
-			mode: options.mode,
-			build_type: std::cell::Cell::new(BuildType::FullBuild),
-		};
-		Dash {
-			cx,
-			config_path: options.config,
-			compiler_config: options.compiler_config,
-			plugins: Plugins::default(),
-			files: IncludedFiles::default(),
-			progress: Progress::new(),
-		}
+		let logger = Rc::new(Logger::new(options.console, options.verbose));
+		let file_definitions = Value::Array(
+			options
+				.file_types
+				.all()
+				.map(|(_, definition)| definition.clone())
+				.collect::<Vec<_>>()
+				.into(),
+		);
+		let pack_definitions =
+			Value::Array(options.pack_types.all().cloned().collect::<Vec<_>>().into());
+		let compiler = Rc::new_cyclic(|weak: &Weak<Compiler>| {
+			let engine = Engine::new(
+				Host {
+					file_systems: [Rc::clone(&fs), Rc::clone(&output_fs)],
+					logger: Rc::clone(&logger),
+					https_imports: options.https_imports,
+					compiler: weak.clone(),
+					mode: options.mode,
+					project_root: project_root.clone(),
+					separate_output: has_com_mojang_directory,
+					file_definitions,
+					pack_definitions,
+				},
+				options.script_time_limit,
+			)
+			.expect("the script engine starts unless memory runs out");
+			let counted_fs: Rc<dyn FileSystem> =
+				Rc::new(Counted::new(Rc::clone(&fs), Rc::clone(&engine.queue)));
+			let counted_output: Rc<dyn FileSystem> = if has_com_mojang_directory {
+				Rc::new(Counted::new(output_fs, Rc::clone(&engine.queue)))
+			} else {
+				Rc::clone(&counted_fs)
+			};
+			Compiler {
+				config_path: options.config,
+				compiler_config: RefCell::new(options.compiler_config),
+				plugins: RefCell::default(),
+				files: RefCell::default(),
+				progress: Progress::new(),
+				copies: RefCell::default(),
+				cx: Context::new(
+					counted_fs,
+					counted_output,
+					has_com_mojang_directory,
+					logger,
+					project_root,
+					(options.pack_types, options.file_types),
+					options.mode,
+					options.request_json_data,
+					engine,
+				),
+			}
+		});
+		Dash { compiler }
+	}
+
+	#[cfg(test)]
+	pub(crate) fn compiler(&self) -> &Rc<Compiler> {
+		&self.compiler
 	}
 
 	/// The context and the first plugin, for tests that call a built-in's
 	/// hooks directly.
 	#[cfg(test)]
-	pub(crate) fn first_plugin(&mut self) -> (&Context, &mut dyn crate::plugin::Plugin) {
-		(&self.cx, self.plugins.first())
+	pub(crate) fn first_plugin(&self) -> (&Context, Rc<dyn Plugin>) {
+		(&self.compiler.cx, self.compiler.plugins.borrow().first())
 	}
 
 	/// The build's progress, for a progress bar.
 	pub fn progress(&self) -> &Progress {
-		&self.progress
+		&self.compiler.progress
 	}
 
 	/// `setup()`: reads the project config and loads the plugins. A config
 	/// that cannot be read is reported and treated as `{}`.
-	pub async fn setup(&mut self) -> Result<(), DashError> {
+	pub async fn setup(&self) -> Result<(), DashError> {
+		let compiler = &self.compiler;
+		compiler.cx.engine.run(compiler.setup()).await
+	}
+
+	/// `build()`: a full build of every file in the project's packs and every
+	/// file an `include` hook adds. The cache file is written in development
+	/// mode only.
+	pub async fn build(&self) -> Result<(), DashError> {
+		let compiler = &self.compiler;
+		let result = compiler.cx.engine.run(compiler.build()).await;
+		compiler.cx.engine.drain().await;
+		result
+	}
+}
+
+impl Compiler {
+	async fn setup(&self) -> Result<(), DashError> {
 		match fs::read_json(&*self.cx.fs, &self.config_path).await {
-			Ok(data) => self.cx.project = ProjectConfig::new(self.cx.project_root.clone(), data),
+			Ok(data) => self
+				.cx
+				.set_project(ProjectConfig::new(self.cx.project_root.clone(), data)),
 			Err(error) => self
 				.cx
 				.logger
 				.console()
 				.error(&format!("Failed to load project config: {error}")),
 		}
+		self.cx.engine.reset_project(self.cx.project().data());
 		self.load_plugins().await
 	}
 
@@ -162,8 +264,9 @@ impl Dash {
 
 	/// `isCompilerActivated`: the config has a `compiler` whose `plugins` is
 	/// an array. A `compiler` of `null` makes TS Dash throw.
-	fn is_compiler_activated(&self) -> Result<bool, DashError> {
-		match js::own(self.cx.project.data(), "compiler") {
+	pub(crate) fn is_compiler_activated(&self) -> Result<bool, DashError> {
+		let project = self.cx.project();
+		match js::own(project.data(), "compiler") {
 			Prop::Undefined => Ok(false),
 			Prop::Value(Value::Null) => Err(DashError::CompilerNull),
 			Prop::Value(compiler) => Ok(matches!(
@@ -174,20 +277,19 @@ impl Dash {
 		}
 	}
 
-	/// `loadPlugins()`: finds the plugins extensions provide, then creates
-	/// each plugin the plugin list names, in list order.
-	async fn load_plugins(&mut self) -> Result<(), DashError> {
-		self.plugins.clear();
+	/// `loadPlugins()`: finds the plugins extensions provide, evaluates
+	/// their modules, then creates each plugin the plugin list names, in list
+	/// order.
+	async fn load_plugins(&self) -> Result<(), DashError> {
+		*self.plugins.borrow_mut() = Rc::default();
+		self.cx.engine.clear_plugin_cache();
 		let extension_plugins = self.extension_plugins().await;
-		let list = match self
-			.compiler_config
-			.as_deref()
-			.filter(|path| !path.is_empty())
-		{
+		let compiler_config = self.compiler_config.borrow().clone();
+		let list = match compiler_config.as_deref().filter(|path| !path.is_empty()) {
 			Some(path) => fs::read_json(&*self.cx.fs, path)
 				.await
 				.map_err(DashError::CompilerConfig)?,
-			None => match js::own(self.cx.project.data(), "compiler") {
+			None => match js::own(self.cx.project().data(), "compiler") {
 				Prop::Value(Value::Null) | Prop::Undefined | Prop::Inherited(_) => {
 					Value::Object(Object::new())
 				}
@@ -206,6 +308,7 @@ impl Dash {
 				Prop::Inherited(_) => Vec::new(),
 			},
 		};
+		let mut entries = Vec::new();
 		for entry in used {
 			let (id, options) = match &entry {
 				Value::String(id) => (id.clone(), None),
@@ -217,28 +320,83 @@ impl Dash {
 				other => (
 					js::own(other, "0").to_js_string(),
 					match js::own(other, "1") {
-						Prop::Value(options) => Some(options),
+						Prop::Value(options) => Some(options.clone()),
 						_ => None,
 					},
 				),
 			};
-			if extension_plugins.contains_key(&id) || js::Inherited::lookup(&id).is_some() {
-				self.cx.logger.console().error(&format!(
-					"Failed to execute plugin {id}: leafcutter-ant cannot run JavaScript plugins yet"
-				));
-				continue;
-			}
-			match plugins::create(&id, &self.cx, Options::new(options)) {
-				BuiltIn::Plugin(plugin) => self.plugins.add(id, plugin),
-				BuiltIn::NeedsJavaScript => self.cx.logger.console().error(&format!(
-					"The built-in plugin {id} needs a JavaScript runtime, which leafcutter-ant does not have yet"
-				)),
-				BuiltIn::Unknown => self
-					.cx
-					.logger
-					.console()
-					.error(&format!("Unknown compiler plugin: {id}")),
-			}
+			entries.push((id, options));
+		}
+
+		// TS Dash's loop: an id the extensions' plugin object has (inherited
+		// properties included) is an extension plugin, whose module starts
+		// evaluating; otherwise a built-in, or an unknown id, reported at
+		// once.
+		js::plugin::set_extensions(&self.cx, &extension_plugins);
+		let mut kinds = Vec::new();
+		for (id, _) in &entries {
+			kinds.push(if js::plugin::is_extension(&self.cx, id) {
+				Kind::Extension
+			} else {
+				match plugins::status(id) {
+					plugins::Status::Unknown => {
+						self.cx
+							.logger
+							.console()
+							.error(&format!("Unknown compiler plugin: {id}"));
+						Kind::Skip
+					}
+					plugins::Status::NotPorted => {
+						self.cx.logger.console().error(&format!(
+							"The built-in plugin {id} is not ported to leafcutter-ant yet"
+						));
+						Kind::Skip
+					}
+					plugins::Status::Ported => Kind::BuiltIn,
+				}
+			});
+		}
+		// The extension modules evaluate together, as TS Dash's promises
+		// run, and report their failures as they settle.
+		let evaluations = entries
+			.iter()
+			.zip(&kinds)
+			.map(|((id, _), kind)| async move {
+				match kind {
+					Kind::Extension => js::plugin::evaluate(&self.cx, id).await,
+					_ => None,
+				}
+			});
+		let factories = poll_all(evaluations.collect()).await;
+		for (((id, options), kind), factory) in entries.into_iter().zip(kinds).zip(factories) {
+			let plugin: Rc<dyn Plugin> = match kind {
+				Kind::Skip => continue,
+				Kind::Extension => {
+					let Some(factory) = factory else { continue };
+					match js::plugin::create(&self.cx, &id, factory, options.as_ref()).await {
+						Some(plugin) => Rc::new(plugin),
+						None => continue,
+					}
+				}
+				Kind::BuiltIn => {
+					match plugins::create(&id, &self.cx, Options::new(options.as_ref())) {
+						BuiltIn::Plugin(plugin) => Rc::from(plugin),
+						BuiltIn::JavaScript(name) => {
+							let factory = js::plugin::built_in(&self.cx, name);
+							match js::plugin::create(&self.cx, &id, factory, options.as_ref()).await
+							{
+								Some(plugin) => Rc::new(plugin),
+								None => continue,
+							}
+						}
+						BuiltIn::Unknown => continue,
+					}
+				}
+			};
+			let mut plugins = self.plugins.borrow_mut();
+			Rc::get_mut(&mut plugins)
+				.expect("nothing holds the plugin list while it is loaded")
+				.add(id, plugin);
 		}
 		Ok(())
 	}
@@ -284,51 +442,55 @@ impl Dash {
 		plugins
 	}
 
-	/// `build()`: a full build of every file in the project's packs and every
-	/// file an `include` hook adds. The cache file is written in development
-	/// mode only.
-	pub async fn build(&mut self) -> Result<(), DashError> {
+	async fn build(&self) -> Result<(), DashError> {
 		self.cx.logger.console().log("Starting compilation...");
 		if !self.is_compiler_activated()? {
 			return Ok(());
 		}
+		self.cx.engine.clear_cache();
 		self.cx.build_type.set(BuildType::FullBuild);
-		self.files.remove_all();
+		self.files.borrow_mut().remove_all();
 		let started = Instant::now();
 		self.progress.set_total(7);
+		let plugins = self.plugins();
 
 		self.cx.logger.time("[HOOK] Build start");
-		self.plugins.build_start(&self.cx).await;
+		plugins.build_start(&self.cx).await;
 		self.cx.logger.time_end("[HOOK] Build start");
 		self.progress.advance();
 
 		self.load_all().await;
 		self.progress.advance();
 
-		let all = self.files.all();
-		self.compile(&all).await;
+		let all = self.files.borrow().all();
+		self.compile(&all).await?;
 
 		self.cx.logger.time("[HOOK] Build end");
-		self.plugins.build_end(&self.cx).await;
+		plugins.build_end(&self.cx).await;
 		self.cx.logger.time_end("[HOOK] Build end");
 		self.progress.advance();
 
 		if self.cx.mode == Mode::Development {
 			self.save_cache().await?;
 		}
-		self.files.reset_all();
+		self.files.borrow_mut().reset_all();
 		self.progress.advance();
 
 		self.cx.logger.console().log(&format!(
 			"Dash compiled {} files in {}ms!",
-			self.files.all().len(),
+			self.files.borrow().all().len(),
 			started.elapsed().as_millis()
 		));
 		Ok(())
 	}
 
+	fn plugins(&self) -> Rc<Plugins> {
+		Rc::clone(&self.plugins.borrow())
+	}
+
 	async fn save_cache(&self) -> Result<(), DashError> {
-		fs::write_json(&*self.cx.fs, &self.cache_path(), &self.files.serialize())
+		let cache = self.files.borrow().serialize();
+		fs::write_json(&*self.cx.fs, &self.cache_path(), &cache)
 			.await
 			.map_err(DashError::CacheFile)
 	}
@@ -337,32 +499,32 @@ impl Dash {
 	/// pack in config order, then what the `include` hooks add. Files an
 	/// `include` hook marks virtual come first; the rest keep their order,
 	/// and a path listed twice is included once.
-	async fn load_all(&mut self) {
+	async fn load_all(&self) {
 		self.cx.logger.time("Load all files");
-		self.files.clear_query_cache();
+		self.files.borrow_mut().clear_query_cache();
 		let mut paths: IndexSet<String> = IndexSet::new();
-		for pack_path in self.cx.project.available_pack_paths() {
+		for pack_path in self.cx.project().available_pack_paths() {
 			match fs::all_files(&*self.cx.fs, &pack_path).await {
 				Ok(files) => paths.extend(files),
 				Err(error) => self.cx.logger.console().warn(&error.to_string()),
 			}
 		}
-		for include in self.plugins.include(&self.cx) {
+		for include in self.plugins().include(&self.cx).await {
 			match include {
 				Include::Path(path) => {
 					paths.insert(path);
 				}
 				Include::Entry(path, is_virtual) => {
-					self.files.add_one(path, is_virtual);
+					self.files.borrow_mut().add_one(path, is_virtual);
 				}
 			}
 		}
-		self.files.add(paths, false);
+		self.files.borrow_mut().add(paths, false);
 		self.cx.logger.time_end("Load all files");
 	}
 
 	/// `compileIncludedFiles(files)`.
-	async fn compile(&mut self, ids: &[FileId]) {
+	async fn compile(&self, ids: &[FileId]) -> Result<(), DashError> {
 		self.cx.logger.time("Loading files...");
 		self.load_files(ids, true).await;
 		self.cx.logger.time_end("Loading files...");
@@ -374,26 +536,89 @@ impl Dash {
 		self.progress.advance();
 
 		self.cx.logger.time("Transforming files...");
-		self.transform_files(&order).await;
+		let result = self.transform_files(&order).await;
 		self.cx.logger.time_end("Transforming files...");
 		self.progress.advance();
+
+		self.await_copies().await;
+		result
 	}
 
-	/// `LoadFiles.run(files, writeFiles)`.
-	async fn load_files(&mut self, ids: &[FileId], write: bool) {
-		let Dash {
-			cx, plugins, files, ..
-		} = self;
-		let pending: Vec<FileId> = ids
-			.iter()
-			.copied()
-			.filter(|&id| !files.file(id).is_done)
-			.collect();
+	/// `compileAdditionalFiles(filePaths, virtual)`, which a plugin's
+	/// `compileFiles` calls: the paths become files (those already included
+	/// stay as they are), are reset and compiled.
+	pub(crate) async fn compile_additional(
+		&self,
+		paths: Vec<String>,
+		is_virtual: bool,
+	) -> Result<(), DashError> {
+		let ids = self.files.borrow_mut().add(paths, is_virtual);
+		self.progress.add_to_total(3);
+		{
+			let mut files = self.files.borrow_mut();
+			for &id in &ids {
+				files.file_mut(id).reset();
+			}
+		}
+		self.compile(&ids).await
+	}
 
-		let mut outputs = Vec::with_capacity(pending.len());
-		for &id in &pending {
-			let path = files.file(id).path.clone();
-			let ignored_by = plugins.ignore(cx, &path);
+	/// `awaitAllFilesCopied`. Copy errors vanish, as they do in TS Dash's
+	/// `Promise.allSettled`. Two files copied to one path: the last in build
+	/// order is the one kept.
+	async fn await_copies(&self) {
+		let copies = std::mem::take(&mut *self.copies.borrow_mut());
+		let (from_fs, to_fs) = (&*self.cx.fs, &*self.cx.output_fs);
+		join_all(
+			copies
+				.iter()
+				.map(|(to, from)| fs::copy_file(from_fs, from, to_fs, to)),
+		)
+		.await;
+	}
+
+	/// The plugins of `hook` that do not ignore the file.
+	fn members(&self, id: FileId, hook: Hook) -> Vec<usize> {
+		self.files
+			.borrow()
+			.file(id)
+			.plugins_for(hook)
+			.unwrap_or_default()
+			.to_vec()
+	}
+
+	/// `LoadFiles.run(files, writeFiles)`: every file that is not done is
+	/// loaded at once, as TS Dash's promises run; then, once every alias
+	/// exists, the `require` hooks of every file run, again at once.
+	async fn load_files(&self, ids: &[FileId], write: bool) {
+		let pending: Vec<FileId> = {
+			let files = self.files.borrow();
+			ids.iter()
+				.copied()
+				.filter(|&id| !files.file(id).is_done)
+				.collect()
+		};
+		let plugins = self.plugins();
+		let loads = pending
+			.iter()
+			.map(|&id| self.load_file(&plugins, id, write));
+		poll_all(loads.collect()).await;
+		let requires = ids.iter().map(|&id| self.require_file(&plugins, id));
+		poll_all(requires.collect()).await;
+	}
+
+	/// `loadFile(file, writeFiles)`: the `ignore` hooks, then the file's
+	/// read starts (`createImplementedHooksMap`), the `transformPath` hooks,
+	/// the `read` hooks, and for a file something read: the `load` and
+	/// `registerAliases` hooks. A file nothing read is done, and is copied
+	/// when its output path differs.
+	async fn load_file(&self, plugins: &Plugins, id: FileId, write: bool) {
+		let cx = &self.cx;
+		let path = self.files.borrow().file(id).path.clone();
+		let ignored_by = plugins.ignore(cx, &path).await;
+		yield_now().await;
+		let reads = {
+			let mut files = self.files.borrow_mut();
 			let file = files.file_mut(id);
 			for plugin in ignored_by {
 				if !file.ignored_by.contains(&plugin) {
@@ -408,46 +633,33 @@ impl Dash {
 					.filter(|&index| !file.ignored_by.iter().any(|id| id == plugins.id(index)))
 					.collect::<Vec<_>>()
 			});
+			let reads = !hooks[Hook::Read.index()].is_empty();
 			file.hooks = Some(hooks);
-			outputs.push(plugins.transform_path(cx, &path));
-		}
+			reads
+		};
+		let output = plugins.transform_path(cx, &path).await;
+		yield_now().await;
+		let content = if reads {
+			Some(cx.fs.read_file(&path).await.map_err(|_| ()))
+		} else {
+			None
+		};
+		let is_virtual = self.files.borrow().file(id).is_virtual;
 
-		// createImplementedHooksMap starts a read for every file some read
-		// hook applies to, virtual files included.
-		let to_read: Vec<FileId> = pending
-			.iter()
-			.copied()
-			.filter(|&id| {
-				files
-					.file(id)
-					.plugins_for(Hook::Read)
-					.is_some_and(|members| !members.is_empty())
-			})
-			.collect();
-		let reads = join_all(
-			to_read
-				.iter()
-				.map(|&id| cx.fs.read_file(&files.file(id).path)),
-		)
-		.await;
-		for (&id, content) in to_read.iter().zip(reads) {
-			files.file_mut(id).content = Some(content.map_err(|_| ()));
-		}
+		let cell = RefCell::new(None);
+		let handle = match (&content, is_virtual) {
+			(_, true) => FileHandle::None,
+			(Some(Ok(bytes)), false) => FileHandle::File(bytes, &cell),
+			(_, false) => FileHandle::Unreadable,
+		};
+		let members = self.members(id, Hook::Read);
+		let data = plugins.read(cx, &members, &path, handle).await;
+		drop(cell);
+		yield_now().await;
 
-		let mut copies: IndexMap<String, String> = IndexMap::new();
-		for (&id, output) in pending.iter().zip(outputs) {
-			let file = files.file(id);
-			let path = file.path.clone();
-			let handle = match (&file.content, file.is_virtual) {
-				(_, true) => FileHandle::None,
-				(Some(Ok(bytes)), false) => FileHandle::File(bytes),
-				(_, false) => FileHandle::Unreadable,
-			};
-			let members = file.plugins_for(Hook::Read).unwrap_or_default().to_vec();
-			let data = plugins.read(cx, &members, &path, handle);
-
+		{
+			let mut files = self.files.borrow_mut();
 			let file = files.file_mut(id);
-			file.content = None;
 			file.output_path = output.clone();
 			if is_nullish(&data) {
 				file.is_done = true;
@@ -456,50 +668,51 @@ impl Dash {
 					&& !file.is_virtual
 					&& write
 				{
-					copies.insert(output, path);
+					self.copies.borrow_mut().insert(output, path);
 				}
-				continue;
+				return;
 			}
-			let data = data.expect("present, as it is not nullish");
-			let load_members = file.plugins_for(Hook::Load).unwrap_or_default().to_vec();
-			let alias_members = file
-				.plugins_for(Hook::RegisterAliases)
-				.unwrap_or_default()
-				.to_vec();
-			let data = plugins.load(cx, &load_members, &path, data);
-			let aliases = plugins.register_aliases(cx, &alias_members, &path, &data);
-			files.file_mut(id).data = Some(data);
-			files.set_aliases(id, aliases);
 		}
+		let data = data.expect("present, as it is not nullish");
+		let load_members = self.members(id, Hook::Load);
+		let alias_members = self.members(id, Hook::RegisterAliases);
+		let mut data = plugins.load(cx, &load_members, &path, data).await;
+		yield_now().await;
+		let aliases = plugins
+			.register_aliases(cx, &alias_members, &path, &mut data)
+			.await;
+		let mut files = self.files.borrow_mut();
+		files.file_mut(id).data = Some(data);
+		files.set_aliases(id, aliases);
+	}
 
-		// Copy errors vanish, as they do in TS Dash's Promise.allSettled. Two
-		// files copied to one path: the last in build order is the one kept.
-		let (cx_fs, cx_out) = (&*cx.fs, &*cx.output_fs);
-		join_all(
-			copies
-				.iter()
-				.map(|(to, from)| fs::copy_file(cx_fs, from, cx_out, to)),
-		)
-		.await;
-
-		for &id in ids {
-			let file = files.file(id);
+	/// `runRequireHooks(file)` and `setRequiredFiles`, for a file whose hooks
+	/// are known.
+	async fn require_file(&self, plugins: &Plugins, id: FileId) {
+		let (members, path, mut data) = {
+			let mut files = self.files.borrow_mut();
+			let file = files.file_mut(id);
 			let Some(members) = file.plugins_for(Hook::Require).map(<[usize]>::to_vec) else {
-				continue;
+				return;
 			};
-			let path = file.path.clone();
-			let required = plugins.require(cx, &members, &path, file.data.as_ref());
-			files.file_mut(id).required_files = required.into_iter().collect();
-		}
+			(members, file.path.clone(), file.data.take())
+		};
+		let required = plugins
+			.require(&self.cx, &members, &path, data.as_mut())
+			.await;
+		let mut files = self.files.borrow_mut();
+		let file = files.file_mut(id);
+		file.data = data;
+		file.required_files = required.into_iter().collect();
 	}
 
 	/// `ResolveFileOrder.run(files)`: each file after the files it requires,
 	/// depth first. Every dependency learns which files require it (their
 	/// update files). A cycle is reported and broken where it closes.
-	fn resolve_order(&mut self, ids: &[FileId]) -> Vec<FileId> {
+	fn resolve_order(&self, ids: &[FileId]) -> Vec<FileId> {
 		let mut resolved: IndexSet<FileId> = IndexSet::new();
 		for &id in ids {
-			if self.files.file(id).is_done || resolved.contains(&id) {
+			if self.files.borrow().file(id).is_done || resolved.contains(&id) {
 				continue;
 			}
 			self.resolve_single(id, &mut resolved);
@@ -508,7 +721,7 @@ impl Dash {
 	}
 
 	/// `resolveSingle`, with the recursion kept on a stack of its own.
-	fn resolve_single(&mut self, root: FileId, resolved: &mut IndexSet<FileId>) {
+	fn resolve_single(&self, root: FileId, resolved: &mut IndexSet<FileId>) {
 		/// A file whose dependencies are being resolved: its required
 		/// queries still to look up, and the files the current one matched.
 		struct Frame {
@@ -527,16 +740,15 @@ impl Dash {
 				.into_iter(),
 			matched: Vec::new().into_iter(),
 		};
+		let mut files = self.files.borrow_mut();
 		let mut unresolved: IndexSet<FileId> = IndexSet::new();
 		unresolved.insert(root);
-		let mut stack = vec![frame(&self.files, root)];
+		let mut stack = vec![frame(&files, root)];
 		while let Some(top) = stack.last_mut() {
 			let file = top.file;
 			let Some(dependency) = top.matched.next() else {
 				match top.queries.next() {
-					Some(query) => {
-						top.matched = self.files.query(&self.cx.globs, &query).into_iter()
-					}
+					Some(query) => top.matched = files.query(&self.cx.globs, &query).into_iter(),
 					None => {
 						resolved.insert(file);
 						unresolved.shift_remove(&file);
@@ -545,66 +757,105 @@ impl Dash {
 				}
 				continue;
 			};
-			self.files.file_mut(dependency).update_files.insert(file);
+			files.file_mut(dependency).update_files.insert(file);
 			if resolved.contains(&dependency) {
 				continue;
 			}
 			if unresolved.contains(&dependency) {
 				self.cx.logger.console().error(&format!(
 					"Circular dependency detected: {} is required by {} but also depends on this file.",
-					self.files.file(dependency).path,
-					self.files.file(file).path
+					files.file(dependency).path,
+					files.file(file).path
 				));
 				continue;
 			}
 			unresolved.insert(dependency);
-			stack.push(frame(&self.files, dependency));
+			stack.push(frame(&files, dependency));
 		}
+	}
+
+	/// The `dependencies` a file's `transform` hooks get
+	/// (`runTransformHooks`): for every file its required queries find, the
+	/// file's path and each of its aliases, with its data.
+	fn dependencies(&self, id: FileId) -> Dependencies {
+		let mut files = self.files.borrow_mut();
+		let queries: Vec<String> = files.file(id).required_files.iter().cloned().collect();
+		let mut dependencies = Vec::new();
+		for query in queries {
+			for found in files.query(&self.cx.globs, &query) {
+				let file = files.file(found);
+				let data = file.data.as_ref().map(Data::share);
+				dependencies.push((file.path.clone(), data.as_ref().map(Data::share)));
+				for alias in &file.aliases {
+					let name = match &alias.key {
+						AliasKey::String(s) => s.clone(),
+						_ => js::to_js_string(&alias.value),
+					};
+					dependencies.push((name, data.as_ref().map(Data::share)));
+				}
+			}
+		}
+		dependencies
 	}
 
 	/// `FileTransformer.run(order)`: transforms and finalizes the files one
 	/// by one in dependency order, then writes the outputs concurrently.
 	/// Data that is not a string is written as compact JSON.
-	async fn transform_files(&mut self, order: &[FileId]) {
-		let Dash {
-			cx, plugins, files, ..
-		} = self;
+	async fn transform_files(&self, order: &[FileId]) -> Result<(), DashError> {
+		let cx = &self.cx;
+		let plugins = self.plugins();
 		let mut writes: IndexMap<String, Vec<u8>> = IndexMap::new();
 		for &id in order {
-			let file = files.file_mut(id);
-			if file.is_done {
+			if self.files.borrow().file(id).is_done {
 				continue;
 			}
-			let path = file.path.clone();
-			let transform_members = file
-				.plugins_for(Hook::Transform)
-				.unwrap_or_default()
-				.to_vec();
-			let finalize_members = file
-				.plugins_for(Hook::FinalizeBuild)
-				.unwrap_or_default()
-				.to_vec();
-			let Some(data) = file.data.take() else {
+			let dependencies = self.dependencies(id);
+			let transform_members = self.members(id, Hook::Transform);
+			let finalize_members = self.members(id, Hook::FinalizeBuild);
+			let (path, data) = {
+				let mut files = self.files.borrow_mut();
+				let file = files.file_mut(id);
+				(file.path.clone(), file.data.take())
+			};
+			let Some(data) = data else {
 				// A file that is not done always has data.
 				continue;
 			};
-			let data = plugins.transform(cx, &transform_members, &path, data);
-			let written = match plugins.finalize_build(cx, &finalize_members, &path, &data) {
+			let mut data = plugins
+				.transform(cx, &transform_members, &path, data, &dependencies)
+				.await;
+			drop(dependencies);
+			let finalized = plugins
+				.finalize_build(cx, &finalize_members, &path, &mut data)
+				.await;
+			let written = match &finalized {
 				Finalized::Undefined | Finalized::Current => {
-					(!data.is_null()).then(|| data.to_output())
+					(!data.is_null()).then(|| data.output(cx))
 				}
-				Finalized::Data(finalized) => (!finalized.is_null()).then(|| finalized.to_output()),
+				Finalized::Data(finalized) => (!finalized.is_null()).then(|| finalized.output(cx)),
 			};
-			let file = files.file_mut(id);
-			file.data = Some(data);
-			file.is_done = true;
-			if let (Some(bytes), Some(output)) = (written, &file.output_path)
-				&& *output != path
+			let output_path = {
+				let mut files = self.files.borrow_mut();
+				let file = files.file_mut(id);
+				file.data = Some(data);
+				file.is_done = true;
+				file.output_path.clone()
+			};
+			let written = match written.transpose() {
+				Ok(written) => written,
+				Err(message) => {
+					// TS Dash's build rejects here, before anything of this
+					// round is written.
+					return Err(DashError::Output(path, message));
+				}
+			};
+			if let (Some(Output::Bytes(bytes)), Some(output)) = (written, output_path)
+				&& output != path
 			{
 				// Two files written to one path: TS Dash writes both at once
 				// and either may land last; here the later file in build
 				// order wins.
-				writes.insert(output.clone(), bytes);
+				writes.insert(output, bytes);
 			}
 		}
 		let out = &*cx.output_fs;
@@ -614,7 +865,61 @@ impl Dash {
 				.map(|(path, bytes)| out.write_file(path, bytes)),
 		)
 		.await;
+		Ok(())
 	}
+
+	/// `getCompilerOutputPath(filePath)`: a known file's output path when it
+	/// differs from its path (`null` becomes `undefined`), else the result of
+	/// the `transformPath` hooks for the path.
+	pub(crate) async fn output_path(&self, path: &str) -> Option<String> {
+		if !matches!(self.is_compiler_activated(), Ok(true)) {
+			return None;
+		}
+		let known = {
+			let files = self.files.borrow();
+			files.get(path).map(|id| files.file(id).output_path.clone())
+		};
+		if let Some(output) = known
+			&& output.as_deref() != Some(path)
+		{
+			return output;
+		}
+		self.plugins()
+			.transform_path(&self.cx, path)
+			.await
+			.filter(|output| !output.is_empty())
+	}
+
+	/// `unlinkMultiple(paths, false, true)`, which a plugin's
+	/// `unlinkOutputFiles` calls: each path's output is removed; the first
+	/// error is returned after every path was tried.
+	pub(crate) async fn unlink_outputs(&self, paths: Vec<String>) -> Result<(), String> {
+		if !matches!(self.is_compiler_activated(), Ok(true)) || paths.is_empty() {
+			return Ok(());
+		}
+		let mut first_error = None;
+		for path in paths {
+			let Some(output) = self.output_path(&path).await else {
+				continue;
+			};
+			if output == path {
+				continue;
+			}
+			if let Err(error) = self.cx.output_fs.unlink(&output).await
+				&& first_error.is_none()
+			{
+				first_error = Some(format!("Error: {error}"));
+			}
+		}
+		first_error.map_or(Ok(()), Err)
+	}
+}
+
+/// What a plugin list entry turned out to name.
+enum Kind {
+	Extension,
+	BuiltIn,
+	Skip,
 }
 
 /// The entries of a plugin list, as TS Dash's `for (i < usedPlugins.length)`

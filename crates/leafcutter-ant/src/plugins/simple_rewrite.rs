@@ -5,7 +5,7 @@
 
 use crate::js::{self, Prop};
 use crate::pathe;
-use crate::plugin::{Context, Hook, HookFuture, OptionValue, Options, PathChange, Plugin};
+use crate::plugin::{Context, Hook, HookFuture, OptionValue, Options, PathChange, Plugin, ready};
 
 /// The four pack types the plugin rewrites, with their development folders
 /// in a `com.mojang` directory.
@@ -74,15 +74,11 @@ fn default_pack_path(definition: &crate::json::Value) -> String {
 	js::own(definition, "defaultPackPath").to_js_string()
 }
 
-impl Plugin for SimpleRewrite {
-	fn hooks(&self) -> &[Hook] {
-		&[Hook::BuildStart, Hook::TransformPath]
-	}
-
+impl SimpleRewrite {
 	/// Removes the previous output before a full build, and before every
 	/// production build. Only the default pack names are removed, so output
 	/// written under a `packNameSuffix` stays behind.
-	fn build_start<'a>(&'a mut self, cx: &'a Context) -> HookFuture<'a> {
+	fn build_start<'a>(&'a self, cx: &'a Context) -> HookFuture<'a, ()> {
 		Box::pin(async move {
 			let production = self.options.get(cx, "mode").is("production");
 			let full_build = self.options.get(cx, "buildType").is("fullBuild");
@@ -105,7 +101,7 @@ impl Plugin for SimpleRewrite {
 		})
 	}
 
-	fn transform_path(&mut self, cx: &Context, path: &str) -> Result<PathChange, String> {
+	fn transform_path(&self, cx: &Context, path: &str) -> Result<PathChange, String> {
 		if path.is_empty() {
 			return Ok(PathChange::Keep);
 		}
@@ -115,13 +111,13 @@ impl Plugin for SimpleRewrite {
 		if path.contains("BP/scripts/gametests/") && self.options.get(cx, "mode").is("production") {
 			return Ok(PathChange::Keep);
 		}
-		let Some((pack_id, pack)) = cx.pack_types.get(&cx.project, path) else {
+		let Some((pack_id, pack)) = cx.pack_types.get(&cx.project(), path) else {
 			return Ok(PathChange::Keep);
 		};
 		if !FOLDERS.iter().any(|(id, _)| *id == pack_id) {
 			return Ok(PathChange::Keep);
 		}
-		let pack_root = cx.project.resolve_pack_path(Some(pack_id), None);
+		let pack_root = cx.project().resolve_pack_path(Some(pack_id), None);
 		let relative = pathe::relative(&pack_root, path);
 		let suffix = match self.options.get(cx, "packNameSuffix") {
 			OptionValue::Value(suffixes) => match js::get(suffixes, pack_id) {
@@ -133,6 +129,20 @@ impl Plugin for SimpleRewrite {
 		.unwrap_or_else(|| default_pack_path(pack));
 		let prefix = self.path_prefix_with_pack(cx, pack_id, &suffix);
 		Ok(PathChange::To(pathe::join(&[&prefix, &relative])))
+	}
+}
+
+impl Plugin for SimpleRewrite {
+	fn hooks(&self) -> &[Hook] {
+		&[Hook::BuildStart, Hook::TransformPath]
+	}
+
+	fn build_start<'a>(&'a self, cx: &'a Context) -> HookFuture<'a, ()> {
+		self.build_start(cx)
+	}
+
+	fn transform_path<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, PathChange> {
+		ready(self.transform_path(cx, path))
 	}
 }
 
@@ -152,6 +162,9 @@ mod tests {
 		let options = DashOptions {
 			config: "./config.json".to_owned(),
 			compiler_config: None,
+			request_json_data: crate::testing::no_request_json_data(),
+			https_imports: crate::HttpsImports::Refused,
+			script_time_limit: crate::ScriptTimeLimit::Unlimited,
 			mode,
 			console: Rc::new(Recorder::default()),
 			verbose: false,
@@ -165,7 +178,7 @@ mod tests {
 			file_types: FileTypes::new(parse_json5("[]").expect("json5"), DetectMatcher::Glob)
 				.expect("definitions"),
 		};
-		let mut dash = Dash::new(input, Some(output), options);
+		let dash = Dash::new(input, Some(output), options);
 		block_on(dash.setup()).expect("setup");
 		block_on(dash.build()).expect("build");
 	}

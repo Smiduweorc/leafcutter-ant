@@ -7,31 +7,27 @@
 
 use crate::js::{self, Prop};
 use crate::json::Value;
-use crate::plugin::{Context, Data, Hook, Plugin};
+use crate::plugin::{Context, Data, Hook, HookFuture, Plugin, ready};
 
 pub(crate) struct EntityIdentifierAlias;
 
 fn is_entity(cx: &Context, path: &str) -> Result<bool, String> {
 	Ok(cx
 		.file_types
-		.id(&cx.project, path)
+		.id(&cx.project(), path)
 		.map_err(|e| e.to_string())?
 		== "entity")
 }
 
-impl Plugin for EntityIdentifierAlias {
-	fn hooks(&self) -> &[Hook] {
-		&[Hook::Ignore, Hook::RegisterAliases]
-	}
-
-	fn ignore(&mut self, cx: &Context, path: &str) -> Result<bool, String> {
+impl EntityIdentifierAlias {
+	fn ignore(&self, cx: &Context, path: &str) -> Result<bool, String> {
 		Ok(!is_entity(cx, path)?)
 	}
 
 	/// `fileContent?.["minecraft:entity"]?.description?.identifier`, when it
 	/// is truthy, whatever its type.
 	fn register_aliases(
-		&mut self,
+		&self,
 		cx: &Context,
 		path: &str,
 		data: &Data,
@@ -56,8 +52,29 @@ impl Plugin for EntityIdentifierAlias {
 	}
 }
 
+impl Plugin for EntityIdentifierAlias {
+	fn hooks(&self) -> &[Hook] {
+		&[Hook::Ignore, Hook::RegisterAliases]
+	}
+
+	fn ignore<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, bool> {
+		ready(self.ignore(cx, path))
+	}
+
+	fn register_aliases<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Option<Vec<Value>>> {
+		ready(self.register_aliases(cx, path, data))
+	}
+}
+
 #[cfg(test)]
 mod tests {
+	use futures_executor::block_on;
+
 	use crate::json::{Indent, stringify};
 	use crate::plugin::Data;
 	use crate::testing::{MemoryFs, dash_with, plugin_vectors, value};
@@ -67,21 +84,22 @@ mod tests {
 	/// identifiers of every JSON type.
 	#[test]
 	fn ignore_and_aliases_match_ts_dash() {
-		let (mut dash, _) = dash_with(MemoryFs::with(&[]), r#"["entityIdentifierAlias"]"#);
+		let (dash, _) = dash_with(MemoryFs::with(&[]), r#"["entityIdentifierAlias"]"#);
 		let vectors = plugin_vectors("entityIdentifierAlias");
 		assert!(vectors.len() > 150);
 		let mut failures = Vec::new();
 		for vector in &vectors {
 			let path = vector[0].as_str().expect("a path");
-			let data = Data::Value(value(&vector[1]));
+			let mut data = Data::Value(value(&vector[1]));
 			let (cx, plugin) = dash.first_plugin();
-			let ignored = plugin.ignore(cx, path).expect("no error");
-			let aliases = match plugin.register_aliases(cx, path, &data).expect("no error") {
-				None => "\"<undefined>\"".to_owned(),
-				Some(aliases) => {
-					stringify(&crate::json::Value::Array(aliases.into()), Indent::None)
-				}
-			};
+			let ignored = block_on(plugin.ignore(cx, path)).expect("no error");
+			let aliases =
+				match block_on(plugin.register_aliases(cx, path, &mut data)).expect("no error") {
+					None => "\"<undefined>\"".to_owned(),
+					Some(aliases) => {
+						stringify(&crate::json::Value::Array(aliases.into()), Indent::None)
+					}
+				};
 			let aliases_json: serde_json::Value =
 				serde_json::from_str(&aliases).expect("our output is JSON");
 			if serde_json::Value::Bool(ignored) != vector[2] || aliases_json != vector[3] {

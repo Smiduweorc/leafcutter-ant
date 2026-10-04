@@ -6,7 +6,9 @@
 use crate::fs;
 use crate::json::Value;
 use crate::pathe;
-use crate::plugin::{Context, Data, FileHandle, Finalized, Hook, Options, PathChange, Plugin};
+use crate::plugin::{
+	Context, Data, FileHandle, Finalized, Hook, HookFuture, Options, PathChange, Plugin, ready,
+};
 use crate::wasm_web;
 
 pub(crate) struct TypeScript {
@@ -43,6 +45,56 @@ pub(crate) fn transform(
 	wasm_web::transform(source, options)
 }
 
+impl TypeScript {
+	fn ignore(&self, _cx: &Context, path: &str) -> Result<bool, String> {
+		Ok(!path.ends_with(".ts"))
+	}
+
+	fn transform_path(&self, _cx: &Context, path: &str) -> Result<PathChange, String> {
+		if !path.ends_with(".ts") {
+			return Ok(PathChange::Keep);
+		}
+		if path.ends_with(".d.ts") {
+			return Ok(PathChange::Omit);
+		}
+		Ok(PathChange::To(format!("{}.js", &path[..path.len() - 3])))
+	}
+
+	fn read(
+		&self,
+		_cx: &Context,
+		path: &str,
+		file: FileHandle<'_>,
+	) -> Result<Option<Data>, String> {
+		match file {
+			FileHandle::File(bytes, _) if path.ends_with(".ts") => {
+				Ok(Some(Data::Value(Value::String(fs::text(bytes)))))
+			}
+			_ => Ok(None),
+		}
+	}
+
+	/// A file swc refuses keeps its TypeScript source, and `finalizeBuild`
+	/// then writes that source to the `.js` path.
+	fn load(&self, _cx: &Context, path: &str, data: &mut Data) -> Result<Option<Data>, String> {
+		let Data::Value(Value::String(source)) = data else {
+			return Ok(None);
+		};
+		if !path.ends_with(".ts") {
+			return Ok(None);
+		}
+		let code = transform(source, &pathe::basename(path, None), self.inline_source_map)?;
+		Ok(Some(Data::Value(Value::String(code))))
+	}
+
+	fn finalize_build(&self, _cx: &Context, path: &str, data: &Data) -> Result<Finalized, String> {
+		match data {
+			Data::Value(Value::String(_)) if path.ends_with(".ts") => Ok(Finalized::Current),
+			_ => Ok(Finalized::Undefined),
+		}
+	}
+}
+
 impl Plugin for TypeScript {
 	fn hooks(&self) -> &[Hook] {
 		&[
@@ -54,57 +106,39 @@ impl Plugin for TypeScript {
 		]
 	}
 
-	fn ignore(&mut self, _cx: &Context, path: &str) -> Result<bool, String> {
-		Ok(!path.ends_with(".ts"))
+	fn ignore<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, bool> {
+		ready(self.ignore(cx, path))
 	}
 
-	fn transform_path(&mut self, _cx: &Context, path: &str) -> Result<PathChange, String> {
-		if !path.ends_with(".ts") {
-			return Ok(PathChange::Keep);
-		}
-		if path.ends_with(".d.ts") {
-			return Ok(PathChange::Omit);
-		}
-		Ok(PathChange::To(format!("{}.js", &path[..path.len() - 3])))
+	fn transform_path<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, PathChange> {
+		ready(self.transform_path(cx, path))
 	}
 
-	fn read(
-		&mut self,
-		_cx: &Context,
-		path: &str,
-		file: FileHandle<'_>,
-	) -> Result<Option<Data>, String> {
-		match file {
-			FileHandle::File(bytes) if path.ends_with(".ts") => {
-				Ok(Some(Data::Value(Value::String(fs::text(bytes)))))
-			}
-			_ => Ok(None),
-		}
+	fn read<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		file: FileHandle<'a>,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.read(cx, path, file))
 	}
 
-	/// A file swc refuses keeps its TypeScript source, and `finalizeBuild`
-	/// then writes that source to the `.js` path.
-	fn load(&mut self, _cx: &Context, path: &str, data: &mut Data) -> Result<Option<Data>, String> {
-		let Data::Value(Value::String(source)) = data else {
-			return Ok(None);
-		};
-		if !path.ends_with(".ts") {
-			return Ok(None);
-		}
-		let code = transform(source, &pathe::basename(path, None), self.inline_source_map)?;
-		Ok(Some(Data::Value(Value::String(code))))
+	fn load<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.load(cx, path, data))
 	}
 
-	fn finalize_build(
-		&mut self,
-		_cx: &Context,
-		path: &str,
-		data: &Data,
-	) -> Result<Finalized, String> {
-		match data {
-			Data::Value(Value::String(_)) if path.ends_with(".ts") => Ok(Finalized::Current),
-			_ => Ok(Finalized::Undefined),
-		}
+	fn finalize_build<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Finalized> {
+		ready(self.finalize_build(cx, path, data))
 	}
 }
 

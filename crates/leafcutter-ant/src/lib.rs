@@ -22,7 +22,8 @@ pub mod project;
 mod testing;
 mod wasm_web;
 
-pub use dash::{Dash, DashError, DashOptions};
+pub use dash::{Dash, DashError, DashOptions, RequestJsonData};
+pub use js::engine::{HttpsImports, ScriptTimeLimit};
 pub use plugin::{BuildType, Mode};
 
 // Runs the Rust examples in the README as doctests, so the README cannot show

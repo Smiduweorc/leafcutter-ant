@@ -3,7 +3,7 @@
 //! `.mcworld` archive holds them.
 
 use crate::pathe;
-use crate::plugin::{Context, Hook, HookFuture, Options, PathChange, Plugin};
+use crate::plugin::{Context, Hook, HookFuture, Options, PathChange, Plugin, ready};
 
 pub(crate) struct RewriteForPackaging {
 	options: Options,
@@ -20,7 +20,7 @@ impl RewriteForPackaging {
 	}
 
 	fn mcaddon(cx: &Context, path: &str) -> PathChange {
-		let pack_id = cx.pack_types.id(&cx.project, path);
+		let pack_id = cx.pack_types.id(&cx.project(), path);
 		let relative = pathe::relative(&cx.project_root, path);
 		match pack_id.as_str() {
 			"behaviorPack" | "resourcePack" | "skinPack" => PathChange::To(pathe::join(&[
@@ -34,7 +34,7 @@ impl RewriteForPackaging {
 	}
 
 	fn mctemplate(&self, cx: &Context, path: &str) -> PathChange {
-		let pack_id = cx.pack_types.id(&cx.project, path);
+		let pack_id = cx.pack_types.id(&cx.project(), path);
 		let relative = relevant_file_path(&pathe::relative(&cx.project_root, path));
 		match pack_id.as_str() {
 			"worldTemplate" => {
@@ -69,12 +69,8 @@ fn relevant_file_path(path: &str) -> String {
 	parts.get(1..).unwrap_or(&[]).join("/")
 }
 
-impl Plugin for RewriteForPackaging {
-	fn hooks(&self) -> &[Hook] {
-		&[Hook::BuildStart, Hook::TransformPath]
-	}
-
-	fn build_start<'a>(&'a mut self, cx: &'a Context) -> HookFuture<'a> {
+impl RewriteForPackaging {
+	fn build_start<'a>(&'a self, cx: &'a Context) -> HookFuture<'a, ()> {
 		Box::pin(async move {
 			// A missing folder is fine: `.catch(() => {})`.
 			let _ = cx
@@ -87,7 +83,7 @@ impl Plugin for RewriteForPackaging {
 
 	/// A `format` other than the three it knows logs an error for every file
 	/// and leaves the path alone.
-	fn transform_path(&mut self, cx: &Context, path: &str) -> Result<PathChange, String> {
+	fn transform_path(&self, cx: &Context, path: &str) -> Result<PathChange, String> {
 		if path.is_empty() {
 			return Ok(PathChange::Keep);
 		}
@@ -98,7 +94,7 @@ impl Plugin for RewriteForPackaging {
 			// .mcworld is .mctemplate without the world manifest.
 			match cx
 				.file_types
-				.id(&cx.project, path)
+				.id(&cx.project(), path)
 				.map_err(|e| e.to_string())?
 				.as_str()
 			{
@@ -114,6 +110,20 @@ impl Plugin for RewriteForPackaging {
 			));
 			Ok(PathChange::Keep)
 		}
+	}
+}
+
+impl Plugin for RewriteForPackaging {
+	fn hooks(&self) -> &[Hook] {
+		&[Hook::BuildStart, Hook::TransformPath]
+	}
+
+	fn build_start<'a>(&'a self, cx: &'a Context) -> HookFuture<'a, ()> {
+		self.build_start(cx)
+	}
+
+	fn transform_path<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, PathChange> {
+		ready(self.transform_path(cx, path))
 	}
 }
 

@@ -18,7 +18,8 @@ use indexmap::IndexMap;
 use crate::json::{Array, Indent, Value, stringify};
 use crate::plugin::BuildType;
 use crate::plugin::{
-	Context, Data, FileHandle, Finalized, Hook, Include, Options, PathChange, Plugin,
+	Context, Data, FileHandle, Finalized, Hook, HookFuture, Include, Options, PathChange, Plugin,
+	ready,
 };
 
 pub(crate) struct ContentsFile {
@@ -31,7 +32,7 @@ pub(crate) struct ContentsFile {
 impl ContentsFile {
 	pub(crate) fn new(cx: &Context, options: Options) -> Self {
 		let contents = cx
-			.project
+			.project()
 			.available_packs()
 			.into_iter()
 			.map(|(id, _)| (id, Rc::new(RefCell::new(Value::Array(Array::new())))))
@@ -45,38 +46,25 @@ impl ContentsFile {
 	/// `isContentsFile(filePath)`: the pack the path is in and that pack's
 	/// `contents.json` path, for a path inside a known pack.
 	fn pack_and_contents_path(cx: &Context, path: &str) -> Option<(String, String)> {
-		let pack_id = cx.pack_types.id(&cx.project, path);
+		let pack_id = cx.pack_types.id(&cx.project(), path);
 		if pack_id == "unknown" {
 			return None;
 		}
 		let contents_path = cx
-			.project
+			.project()
 			.resolve_pack_path(Some(&pack_id), Some("contents.json"));
 		Some((pack_id, contents_path))
 	}
 }
 
-impl Plugin for ContentsFile {
-	fn hooks(&self) -> &[Hook] {
-		if self.active {
-			&[
-				Hook::Include,
-				Hook::TransformPath,
-				Hook::Read,
-				Hook::FinalizeBuild,
-			]
-		} else {
-			&[]
-		}
-	}
-
-	fn include(&mut self, cx: &Context) -> Result<Option<Vec<Include>>, String> {
+impl ContentsFile {
+	fn include(&self, cx: &Context) -> Result<Option<Vec<Include>>, String> {
 		Ok(Some(
 			self.contents
 				.keys()
 				.map(|id| {
 					Include::Entry(
-						cx.project
+						cx.project()
 							.resolve_pack_path(Some(id), Some("contents.json")),
 						true,
 					)
@@ -86,7 +74,7 @@ impl Plugin for ContentsFile {
 	}
 
 	fn read(
-		&mut self,
+		&self,
 		cx: &Context,
 		path: &str,
 		_file: FileHandle<'_>,
@@ -103,11 +91,11 @@ impl Plugin for ContentsFile {
 			.map(|list| Data::Shared(Rc::clone(list))))
 	}
 
-	fn transform_path(&mut self, cx: &Context, path: &str) -> Result<PathChange, String> {
+	fn transform_path(&self, cx: &Context, path: &str) -> Result<PathChange, String> {
 		if path.is_empty() {
 			return Ok(PathChange::Keep);
 		}
-		let pack_id = cx.pack_types.id(&cx.project, path);
+		let pack_id = cx.pack_types.id(&cx.project(), path);
 		if pack_id == "unknown" {
 			return Ok(PathChange::Keep);
 		}
@@ -122,12 +110,7 @@ impl Plugin for ContentsFile {
 		Ok(PathChange::Keep)
 	}
 
-	fn finalize_build(
-		&mut self,
-		cx: &Context,
-		path: &str,
-		_data: &Data,
-	) -> Result<Finalized, String> {
+	fn finalize_build(&self, cx: &Context, path: &str, _data: &Data) -> Result<Finalized, String> {
 		let Some((pack_id, contents_path)) = Self::pack_and_contents_path(cx, path) else {
 			return Ok(Finalized::Undefined);
 		};
@@ -145,6 +128,47 @@ impl Plugin for ContentsFile {
 	}
 }
 
+impl Plugin for ContentsFile {
+	fn hooks(&self) -> &[Hook] {
+		if self.active {
+			&[
+				Hook::Include,
+				Hook::TransformPath,
+				Hook::Read,
+				Hook::FinalizeBuild,
+			]
+		} else {
+			&[]
+		}
+	}
+
+	fn include<'a>(&'a self, cx: &'a Context) -> HookFuture<'a, Option<Vec<Include>>> {
+		ready(self.include(cx))
+	}
+
+	fn read<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		file: FileHandle<'a>,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.read(cx, path, file))
+	}
+
+	fn transform_path<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, PathChange> {
+		ready(self.transform_path(cx, path))
+	}
+
+	fn finalize_build<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Finalized> {
+		ready(self.finalize_build(cx, path, data))
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use futures_executor::block_on;
@@ -156,7 +180,7 @@ mod tests {
 		// ContentsFile.ts never empties packContents, and a Dash keeps its
 		// plugins from setup to setup.
 		let fs = MemoryFs::with(&[("BP/a.json", "{}")]);
-		let (mut dash, _) = dash_with(fs.clone(), r#"["contentsFile", "simpleRewrite"]"#);
+		let (dash, _) = dash_with(fs.clone(), r#"["contentsFile", "simpleRewrite"]"#);
 		block_on(dash.build()).expect("the first build");
 		assert_eq!(
 			fs.text("builds/dev/Bridge BP/a.json").as_deref(),

@@ -5,7 +5,10 @@
 
 use crate::json::Value;
 
+pub(crate) mod bridge;
+pub(crate) mod engine;
 mod magic_string;
+pub(crate) mod plugin;
 pub(crate) mod transform;
 
 /// A value a property lookup can produce: a JSON value, `undefined`, or one

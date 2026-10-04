@@ -11,7 +11,7 @@ use super::*;
 use crate::console::tests::Recorder;
 use crate::fs::{DirEntry, FsFuture};
 use crate::json::{Indent, parse_json5, stringify};
-use crate::plugin::{Data, PathChange, Plugin};
+use crate::plugin::{Data, Dependencies, HookFuture, PathChange, Plugin, ready};
 use crate::testing::MemoryFs;
 
 const PACKS: &str = r#"[{"id": "behaviorPack", "defaultPackPath": "BP"}, {"id": "resourcePack", "defaultPackPath": "RP"}]"#;
@@ -21,18 +21,29 @@ fn dash_with(fs: Rc<MemoryFs>, mode: Mode) -> (Dash, Rc<Recorder>) {
 	let options = DashOptions {
 		config: "./config.json".to_owned(),
 		compiler_config: None,
+		request_json_data: crate::testing::no_request_json_data(),
+		https_imports: crate::HttpsImports::Refused,
+		script_time_limit: crate::ScriptTimeLimit::Unlimited,
 		mode,
 		console: recorder.clone(),
 		verbose: false,
-		pack_types: PackTypes::new(parse_json5(PACKS).expect("json")).expect("pack definitions"),
-		file_types: FileTypes::new(
-			parse_json5(r#"[{"id": "entity", "detect": {"packType": "behaviorPack", "scope": "entities/", "fileExtensions": [".json"]}}]"#)
-				.expect("json"),
-			crate::project::DetectMatcher::Glob,
-		)
-		.expect("file definitions"),
+		pack_types: pack_types(),
+		file_types: file_types(),
 	};
 	(Dash::new(fs, None, options), recorder)
+}
+
+fn pack_types() -> PackTypes {
+	PackTypes::new(parse_json5(PACKS).expect("json")).expect("pack definitions")
+}
+
+fn file_types() -> FileTypes {
+	FileTypes::new(
+		parse_json5(r#"[{"id": "entity", "detect": {"packType": "behaviorPack", "scope": "entities/", "fileExtensions": [".json"]}}]"#)
+			.expect("json"),
+		crate::project::DetectMatcher::Glob,
+	)
+	.expect("file definitions")
 }
 
 const CONFIG: &str = r#"{"packs": {"behaviorPack": "./BP"}, "compiler": {"plugins": []}}"#;
@@ -70,12 +81,8 @@ impl TestPlugin {
 	}
 }
 
-impl Plugin for TestPlugin {
-	fn hooks(&self) -> &[Hook] {
-		&self.hooks
-	}
-
-	fn include(&mut self, _cx: &Context) -> Result<Option<Vec<Include>>, String> {
+impl TestPlugin {
+	fn include(&self, _cx: &Context) -> Result<Option<Vec<Include>>, String> {
 		Ok(self.include.as_ref().map(|entries| {
 			entries
 				.iter()
@@ -87,11 +94,11 @@ impl Plugin for TestPlugin {
 		}))
 	}
 
-	fn ignore(&mut self, _cx: &Context, path: &str) -> Result<bool, String> {
+	fn ignore(&self, _cx: &Context, path: &str) -> Result<bool, String> {
 		Ok(self.ignore.as_ref().is_some_and(|f| f(path)))
 	}
 
-	fn transform_path(&mut self, _cx: &Context, path: &str) -> Result<PathChange, String> {
+	fn transform_path(&self, _cx: &Context, path: &str) -> Result<PathChange, String> {
 		self.record(format!("transformPath {path}"));
 		self.transform_path
 			.as_ref()
@@ -99,7 +106,7 @@ impl Plugin for TestPlugin {
 	}
 
 	fn read(
-		&mut self,
+		&self,
 		_cx: &Context,
 		path: &str,
 		file: FileHandle<'_>,
@@ -108,13 +115,13 @@ impl Plugin for TestPlugin {
 		self.read.as_ref().map_or(Ok(None), |f| f(path, file))
 	}
 
-	fn load(&mut self, _cx: &Context, path: &str, data: &mut Data) -> Result<Option<Data>, String> {
+	fn load(&self, _cx: &Context, path: &str, data: &mut Data) -> Result<Option<Data>, String> {
 		self.record(format!("load {path}"));
 		Ok(self.load.as_ref().and_then(|f| f(path, data)))
 	}
 
 	fn register_aliases(
-		&mut self,
+		&self,
 		_cx: &Context,
 		path: &str,
 		_data: &Data,
@@ -123,7 +130,7 @@ impl Plugin for TestPlugin {
 	}
 
 	fn require(
-		&mut self,
+		&self,
 		_cx: &Context,
 		path: &str,
 		_data: Option<&Data>,
@@ -132,7 +139,7 @@ impl Plugin for TestPlugin {
 	}
 
 	fn transform(
-		&mut self,
+		&self,
 		_cx: &Context,
 		path: &str,
 		data: &mut Data,
@@ -141,16 +148,84 @@ impl Plugin for TestPlugin {
 		Ok(self.transform.as_ref().and_then(|f| f(path, data)))
 	}
 
-	fn finalize_build(
-		&mut self,
-		_cx: &Context,
-		path: &str,
-		data: &Data,
-	) -> Result<Finalized, String> {
+	fn finalize_build(&self, _cx: &Context, path: &str, data: &Data) -> Result<Finalized, String> {
 		Ok(self
 			.finalize
 			.as_ref()
 			.map_or(Finalized::Undefined, |f| f(path, data)))
+	}
+}
+
+impl Plugin for TestPlugin {
+	fn hooks(&self) -> &[Hook] {
+		&self.hooks
+	}
+
+	fn include<'a>(&'a self, cx: &'a Context) -> HookFuture<'a, Option<Vec<Include>>> {
+		ready(self.include(cx))
+	}
+
+	fn ignore<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, bool> {
+		ready(self.ignore(cx, path))
+	}
+
+	fn transform_path<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, PathChange> {
+		ready(self.transform_path(cx, path))
+	}
+
+	fn read<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		file: FileHandle<'a>,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.read(cx, path, file))
+	}
+
+	fn load<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.load(cx, path, data))
+	}
+
+	fn register_aliases<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Option<Vec<Value>>> {
+		ready(self.register_aliases(cx, path, data))
+	}
+
+	fn require<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: Option<&'a mut Data>,
+	) -> HookFuture<'a, Option<Vec<String>>> {
+		ready(self.require(cx, path, data.map(|data| &*data)))
+	}
+
+	fn transform<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+		_dependencies: &'a Dependencies,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.transform(cx, path, data))
+	}
+
+	fn finalize_build<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Finalized> {
+		ready(self.finalize_build(cx, path, data))
 	}
 }
 
@@ -170,22 +245,24 @@ fn reader() -> TestPlugin {
 			Ok(PathChange::To(path.replacen("BP/", "out/", 1)))
 		})),
 		read: Some(Box::new(|_, file| match file {
-			FileHandle::File(bytes) => Ok(Some(text(&String::from_utf8_lossy(bytes)))),
+			FileHandle::File(bytes, _) => Ok(Some(text(&String::from_utf8_lossy(bytes)))),
 			_ => Ok(None),
 		})),
 		..TestPlugin::default()
 	}
 }
 
-fn build(dash: &mut Dash) {
+fn build(dash: &Dash) {
 	block_on(dash.setup()).expect("setup succeeds");
 	block_on(dash.build()).expect("the build succeeds");
 }
 
-fn setup_with(dash: &mut Dash, plugins: Vec<(&str, TestPlugin)>) {
+fn setup_with(dash: &Dash, plugins: Vec<(&str, TestPlugin)>) {
 	block_on(dash.setup()).expect("setup succeeds");
 	for (id, plugin) in plugins {
-		dash.plugins.add(id.to_owned(), Box::new(plugin));
+		Rc::get_mut(&mut *dash.compiler().plugins.borrow_mut())
+			.expect("no build is running")
+			.add(id.to_owned(), Rc::new(plugin));
 	}
 }
 
@@ -197,8 +274,8 @@ fn without_a_compiler_plugin_array_nothing_is_built() {
 		r#"{"compiler": 5}"#,
 	] {
 		let fs = MemoryFs::with(&[("config.json", config), ("BP/a.json", "{}")]);
-		let (mut dash, recorder) = dash_with(fs.clone(), Mode::Development);
-		build(&mut dash);
+		let (dash, recorder) = dash_with(fs.clone(), Mode::Development);
+		build(&dash);
 		assert_eq!(fs.paths(), ["BP/a.json", "config.json"], "{config}");
 		assert_eq!(*recorder.0.borrow(), ["log: Starting compilation..."]);
 	}
@@ -209,7 +286,7 @@ fn a_null_compiler_stops_the_build_as_the_type_error_does_in_ts_dash() {
 	// Dash.ts isCompilerActivated reads `config.compiler.plugins` after only
 	// checking `!== undefined`.
 	let fs = MemoryFs::with(&[("config.json", r#"{"compiler": null}"#)]);
-	let (mut dash, _) = dash_with(fs, Mode::Development);
+	let (dash, _) = dash_with(fs, Mode::Development);
 	block_on(dash.setup()).expect("setup succeeds");
 	assert!(matches!(
 		block_on(dash.build()),
@@ -220,8 +297,8 @@ fn a_null_compiler_stops_the_build_as_the_type_error_does_in_ts_dash() {
 #[test]
 fn an_unreadable_config_is_reported_and_treated_as_empty() {
 	let fs = MemoryFs::with(&[("config.json", "{packs:")]);
-	let (mut dash, recorder) = dash_with(fs, Mode::Development);
-	build(&mut dash);
+	let (dash, recorder) = dash_with(fs, Mode::Development);
+	build(&dash);
 	assert_eq!(
 		*recorder.0.borrow(),
 		[
@@ -232,7 +309,7 @@ fn an_unreadable_config_is_reported_and_treated_as_empty() {
 }
 
 #[test]
-fn plugin_list_entries_name_builtins_and_unknown_or_javascript_plugins_are_reported() {
+fn plugin_list_entries_name_builtins_extensions_and_unknown_plugins() {
 	let config = r#"{"compiler": {"plugins": ["nope", ["moLang", {}], [5], {"0": "customCommands"}, "constructor", "fromExtension"]}}"#;
 	let fs = MemoryFs::with(&[
 		("config.json", config),
@@ -241,17 +318,19 @@ fn plugin_list_entries_name_builtins_and_unknown_or_javascript_plugins_are_repor
 			r#"{"compiler": {"plugins": {"fromExtension": "plugin.js"}}}"#,
 		),
 	]);
-	let (mut dash, recorder) = dash_with(fs, Mode::Development);
+	let (dash, recorder) = dash_with(fs, Mode::Development);
 	block_on(dash.setup()).expect("setup succeeds");
 	assert_eq!(
 		*recorder.0.borrow(),
 		[
 			"error: Unknown compiler plugin: nope",
-			"error: The built-in plugin moLang needs a JavaScript runtime, which leafcutter-ant does not have yet",
+			"error: The built-in plugin moLang is not ported to leafcutter-ant yet",
 			"error: Unknown compiler plugin: 5",
-			"error: The built-in plugin customCommands needs a JavaScript runtime, which leafcutter-ant does not have yet",
-			"error: Failed to execute plugin constructor: leafcutter-ant cannot run JavaScript plugins yet",
-			"error: Failed to execute plugin fromExtension: leafcutter-ant cannot run JavaScript plugins yet",
+			"error: The built-in plugin customCommands is not ported to leafcutter-ant yet",
+			// `plugins.constructor` is Object, which the loader takes for a
+			// path.
+			"error: Failed to execute plugin constructor: TypeError: Path must be a string. Received undefined",
+			"error: Failed to execute plugin fromExtension: Error: File \".bridge/extensions/ext/plugin.js\" not found",
 		]
 	);
 }
@@ -265,20 +344,20 @@ fn a_plugin_list_ts_dash_cannot_read_fails_setup() {
 		r#"{"compiler": {"plugins": {"length": 1}}}"#,
 	] {
 		let fs = MemoryFs::with(&[("config.json", config)]);
-		let (mut dash, _) = dash_with(fs, Mode::Development);
+		let (dash, _) = dash_with(fs, Mode::Development);
 		assert!(
 			matches!(block_on(dash.setup()), Err(DashError::PluginList(_))),
 			"{config}"
 		);
 	}
 	let fs = MemoryFs::with(&[("config.json", CONFIG), ("compiler.json", "null")]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Development);
-	dash.compiler_config = Some("compiler.json".to_owned());
+	let (dash, _) = dash_with(fs.clone(), Mode::Development);
+	*dash.compiler().compiler_config.borrow_mut() = Some("compiler.json".to_owned());
 	assert!(matches!(
 		block_on(dash.setup()),
 		Err(DashError::PluginList(_))
 	));
-	dash.compiler_config = Some("missing.json".to_owned());
+	*dash.compiler().compiler_config.borrow_mut() = Some("missing.json".to_owned());
 	assert!(matches!(
 		block_on(dash.setup()),
 		Err(DashError::CompilerConfig(_))
@@ -292,7 +371,7 @@ fn files_are_read_transformed_and_written_to_their_output_path() {
 		("BP/b.txt", "bee"),
 		("BP/a/x.txt", "ex"),
 	]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let upper = TestPlugin {
 		hooks: vec![Hook::Transform],
 		transform: Some(Box::new(|_, data| match data {
@@ -301,7 +380,7 @@ fn files_are_read_transformed_and_written_to_their_output_path() {
 		})),
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("reader", reader()), ("upper", upper)]);
+	setup_with(&dash, vec![("reader", reader()), ("upper", upper)]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(fs.text("out/b.txt").as_deref(), Some("BEE"));
 	assert_eq!(fs.text("out/a/x.txt").as_deref(), Some("EX"));
@@ -320,7 +399,7 @@ fn a_file_no_read_hook_reads_is_copied_when_its_path_changes() {
 		("BP/icon.png", "\u{1}png"),
 		("BP/same.txt", "s"),
 	]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let mover = TestPlugin {
 		hooks: vec![Hook::TransformPath],
 		transform_path: Some(Box::new(|path| {
@@ -332,7 +411,7 @@ fn a_file_no_read_hook_reads_is_copied_when_its_path_changes() {
 		})),
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("mover", mover)]);
+	setup_with(&dash, vec![("mover", mover)]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(fs.text("out/icon.png").as_deref(), Some("\u{1}png"));
 	assert_eq!(
@@ -353,7 +432,7 @@ fn transform_path_null_ends_the_chain_and_drops_the_output() {
 		("BP/x.d.ts", "declare"),
 		("BP/y.ts", "code"),
 	]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let omit = TestPlugin {
 		hooks: vec![Hook::TransformPath],
 		transform_path: Some(Box::new(|path| {
@@ -372,7 +451,7 @@ fn transform_path_null_ends_the_chain_and_drops_the_output() {
 		name: "second",
 		..reader()
 	};
-	setup_with(&mut dash, vec![("omit", omit), ("second", second)]);
+	setup_with(&dash, vec![("omit", omit), ("second", second)]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(
 		fs.paths(),
@@ -396,7 +475,7 @@ fn the_first_read_that_is_not_null_wins_and_null_means_nothing_was_read() {
 		("BP/a.txt", "a"),
 		("BP/b.txt", "b"),
 	]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let nulls = TestPlugin {
 		hooks: vec![Hook::Read],
 		read: Some(Box::new(|path, _| {
@@ -408,7 +487,7 @@ fn the_first_read_that_is_not_null_wins_and_null_means_nothing_was_read() {
 		})),
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("nulls", nulls), ("reader", reader())]);
+	setup_with(&dash, vec![("nulls", nulls), ("reader", reader())]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(
 		fs.text("out/a.txt").as_deref(),
@@ -422,7 +501,7 @@ fn the_first_read_that_is_not_null_wins_and_null_means_nothing_was_read() {
 fn load_and_transform_chains_fall_back_to_the_start_when_they_end_in_null() {
 	// AllPlugins.ts runLoadHooks and LoadFiles.ts `?? file.data`.
 	let fs = MemoryFs::with(&[("config.json", CONFIG), ("BP/a.txt", "start")]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let replace_then_null = TestPlugin {
 		hooks: vec![Hook::Load, Hook::Transform],
 		load: Some(Box::new(|_, _| Some(text("replaced")))),
@@ -442,7 +521,7 @@ fn load_and_transform_chains_fall_back_to_the_start_when_they_end_in_null() {
 		..TestPlugin::default()
 	};
 	setup_with(
-		&mut dash,
+		&dash,
 		vec![
 			("reader", reader()),
 			("a", replace_then_null),
@@ -461,7 +540,7 @@ fn finalize_build_takes_the_first_answer_that_is_not_undefined_and_null_omits_th
 		("BP/b.txt", "b"),
 		("BP/c.txt", "c"),
 	]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let to_json = TestPlugin {
 		hooks: vec![Hook::Transform, Hook::FinalizeBuild],
 		transform: Some(Box::new(|path, _| {
@@ -486,7 +565,7 @@ fn finalize_build_takes_the_first_answer_that_is_not_undefined_and_null_omits_th
 		..TestPlugin::default()
 	};
 	setup_with(
-		&mut dash,
+		&dash,
 		vec![("reader", reader()), ("json", to_json), ("last", last)],
 	);
 	block_on(dash.build()).expect("built");
@@ -502,7 +581,7 @@ fn finalize_build_takes_the_first_answer_that_is_not_undefined_and_null_omits_th
 #[test]
 fn data_that_is_not_a_string_is_written_as_compact_json() {
 	let fs = MemoryFs::with(&[("config.json", CONFIG), ("BP/a.json", "{}")]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let parse = TestPlugin {
 		hooks: vec![Hook::Load],
 		load: Some(Box::new(|_, _| {
@@ -510,7 +589,7 @@ fn data_that_is_not_a_string_is_written_as_compact_json() {
 		})),
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("reader", reader()), ("parse", parse)]);
+	setup_with(&dash, vec![("reader", reader()), ("parse", parse)]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(
 		fs.text("out/a.json").as_deref(),
@@ -524,7 +603,7 @@ fn a_plugin_that_ignores_a_file_is_left_out_of_its_per_file_hooks_by_id() {
 	// instance with the same id is left out as well.
 	let log = Rc::new(RefCell::new(Vec::new()));
 	let fs = MemoryFs::with(&[("config.json", CONFIG), ("BP/a.txt", "a")]);
-	let (mut dash, _) = dash_with(fs.clone(), Mode::Production);
+	let (dash, _) = dash_with(fs.clone(), Mode::Production);
 	let ignorer = |name: &'static str| TestPlugin {
 		hooks: vec![Hook::Ignore, Hook::TransformPath, Hook::Transform],
 		ignore: Some(Box::new(move |_| name == "first")),
@@ -533,7 +612,7 @@ fn a_plugin_that_ignores_a_file_is_left_out_of_its_per_file_hooks_by_id() {
 		..TestPlugin::default()
 	};
 	setup_with(
-		&mut dash,
+		&dash,
 		vec![
 			("reader", reader()),
 			("same", ignorer("first")),
@@ -553,14 +632,14 @@ fn a_plugin_that_ignores_a_file_is_left_out_of_its_per_file_hooks_by_id() {
 #[test]
 fn a_hook_that_throws_is_reported_with_the_plugin_hook_and_file_and_the_build_goes_on() {
 	let fs = MemoryFs::with(&[("config.json", CONFIG), ("BP/a.txt", "a")]);
-	let (mut dash, recorder) = dash_with(fs.clone(), Mode::Production);
+	let (dash, recorder) = dash_with(fs.clone(), Mode::Production);
 	let thrower = TestPlugin {
 		hooks: vec![Hook::TransformPath, Hook::Read],
 		transform_path: Some(Box::new(|_| Err("TypeError: nope".to_owned()))),
 		read: Some(Box::new(|_, _| Err("Error: unreadable".to_owned()))),
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("thrower", thrower), ("reader", reader())]);
+	setup_with(&dash, vec![("thrower", thrower), ("reader", reader())]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(fs.text("out/a.txt").as_deref(), Some("a"));
 	let lines = recorder.0.borrow();
@@ -582,7 +661,7 @@ fn included_virtual_files_come_first_and_included_paths_after_the_packs() {
 		("RP/r.txt", "r"),
 		("extra/e.txt", "e"),
 	]);
-	let (mut dash, recorder) = dash_with(fs.clone(), Mode::Development);
+	let (dash, recorder) = dash_with(fs.clone(), Mode::Development);
 	let includer = TestPlugin {
 		hooks: vec![Hook::Include, Hook::TransformPath],
 		include: Some(vec![
@@ -594,7 +673,7 @@ fn included_virtual_files_come_first_and_included_paths_after_the_packs() {
 		name: "p",
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("includer", includer)]);
+	setup_with(&dash, vec![("includer", includer)]);
 	block_on(dash.build()).expect("built");
 	assert_eq!(
 		*log.borrow(),
@@ -625,7 +704,7 @@ fn the_cache_file_lists_every_file_with_aliases_requirements_and_update_files() 
 		("BP/b.txt", "b"),
 		("BP/c.txt", "c"),
 	]);
-	let (mut dash, recorder) = dash_with(fs.clone(), Mode::Development);
+	let (dash, recorder) = dash_with(fs.clone(), Mode::Development);
 	let deps = TestPlugin {
 		hooks: vec![Hook::RegisterAliases, Hook::Require],
 		aliases: Some(Box::new(|path| {
@@ -648,7 +727,7 @@ fn the_cache_file_lists_every_file_with_aliases_requirements_and_update_files() 
 		})),
 		..TestPlugin::default()
 	};
-	setup_with(&mut dash, vec![("reader", reader()), ("deps", deps)]);
+	setup_with(&dash, vec![("reader", reader()), ("deps", deps)]);
 	block_on(dash.build()).expect("built");
 	let cache = fs
 		.text(".bridge/.dash.development.json")
@@ -710,27 +789,30 @@ fn failed_writes_and_copies_are_silent_as_in_ts_dash() {
 		("BP/a.txt", "a"),
 		("BP/b.png", "b"),
 	]);
-	let (dash, recorder) = dash_with(fs.clone(), Mode::Production);
+	let (_, recorder) = dash_with(fs.clone(), Mode::Production);
 	let options = DashOptions {
 		config: "./config.json".to_owned(),
 		compiler_config: None,
+		request_json_data: crate::testing::no_request_json_data(),
+		https_imports: crate::HttpsImports::Refused,
+		script_time_limit: crate::ScriptTimeLimit::Unlimited,
 		mode: Mode::Production,
 		console: recorder.clone(),
 		verbose: false,
-		pack_types: dash.cx.pack_types,
-		file_types: dash.cx.file_types,
+		pack_types: pack_types(),
+		file_types: file_types(),
 	};
-	let mut dash = Dash::new(fs.clone(), Some(Rc::new(RefusingFs)), options);
+	let dash = Dash::new(fs.clone(), Some(Rc::new(RefusingFs)), options);
 	let copy_png = TestPlugin {
 		read: Some(Box::new(|path, file| match file {
-			FileHandle::File(bytes) if path.ends_with(".txt") => {
+			FileHandle::File(bytes, _) if path.ends_with(".txt") => {
 				Ok(Some(text(&String::from_utf8_lossy(bytes))))
 			}
 			_ => Ok(None),
 		})),
 		..reader()
 	};
-	setup_with(&mut dash, vec![("reader", copy_png)]);
+	setup_with(&dash, vec![("reader", copy_png)]);
 	block_on(dash.build()).expect("the build succeeds");
 	let lines = recorder.0.borrow();
 	assert_eq!(lines.len(), 2, "{lines:?}");
@@ -739,4 +821,138 @@ fn failed_writes_and_copies_are_silent_as_in_ts_dash() {
 		lines[1].starts_with("log: Dash compiled 2 files in "),
 		"{lines:?}"
 	);
+}
+
+/// A compiler whose project has one extension plugin, `ext`, with this
+/// module source, listed before any other plugins named in `plugins`.
+fn with_extension(
+	source: &str,
+	plugins: &str,
+	files: &[(&str, &str)],
+	limit: crate::ScriptTimeLimit,
+) -> (Dash, Rc<MemoryFs>, Rc<Recorder>) {
+	let config = format!(
+		r#"{{"packs": {{"behaviorPack": "./BP"}}, "compiler": {{"plugins": ["ext"{plugins}]}}}}"#
+	);
+	let mut all = vec![
+		("config.json", config.as_str()),
+		(
+			".bridge/extensions/e/manifest.json",
+			r#"{"compiler": {"plugins": {"ext": "ext.js"}}}"#,
+		),
+		(".bridge/extensions/e/ext.js", source),
+	];
+	all.extend_from_slice(files);
+	let fs = MemoryFs::with(&all);
+	let recorder = Rc::new(Recorder::default());
+	let options = DashOptions {
+		config: "./config.json".to_owned(),
+		compiler_config: None,
+		request_json_data: crate::testing::no_request_json_data(),
+		https_imports: crate::HttpsImports::Refused,
+		script_time_limit: limit,
+		mode: Mode::Production,
+		console: recorder.clone(),
+		verbose: false,
+		pack_types: pack_types(),
+		file_types: file_types(),
+	};
+	let dash = Dash::new(fs.clone(), None, options);
+	block_on(dash.setup()).expect("setup succeeds");
+	(dash, fs, recorder)
+}
+
+#[test]
+fn a_hook_that_never_settles_fails_instead_of_hanging_the_build() {
+	// In TS Dash a promise that never settles stops the build for good; here
+	// the hook is reported once nothing can settle it any more.
+	let (dash, fs, recorder) = with_extension(
+		"export default () => ({ transformPath: (p) => p.replace('BP/', 'out/'), load: () => new Promise(() => {}), read: () => 'data' })",
+		"",
+		&[("BP/a.txt", "a")],
+		crate::ScriptTimeLimit::Unlimited,
+	);
+	block_on(dash.build()).expect("the build succeeds");
+	let lines = recorder.0.borrow();
+	assert!(
+		lines.iter().any(|line| line
+			== "error: The plugin \"ext\" threw an error while running the \"load\" hook for \"BP/a.txt\": Error: the promise can never settle: nothing it waits for is still running"),
+		"{lines:?}"
+	);
+	assert_eq!(fs.text("out/a.txt").as_deref(), Some("data"));
+}
+
+#[test]
+fn a_script_past_its_time_limit_is_stopped_and_reported() {
+	let (dash, _, recorder) = with_extension(
+		"export default () => ({ buildStart() { for (;;) {} } })",
+		"",
+		&[],
+		crate::ScriptTimeLimit::After(std::time::Duration::from_millis(50)),
+	);
+	block_on(dash.build()).expect("the build succeeds");
+	let lines = recorder.0.borrow();
+	assert!(
+		lines.iter().any(|line| line
+			== "error: The plugin \"ext\" threw an error while running the \"buildStart\" hook: InternalError: interrupted: the script ran past its time limit"),
+		"{lines:?}"
+	);
+}
+
+#[test]
+fn work_a_script_leaves_running_finishes_before_the_build_returns() {
+	// An event loop runs a promise nobody awaits to its end.
+	let (dash, fs, _) = with_extension(
+		"export default ({ outputFileSystem }) => ({ buildEnd() { outputFileSystem.readFile('BP/a.txt').then((f) => f.text()).then((t) => outputFileSystem.writeFile('late.txt', t + '!')) } })",
+		"",
+		&[("BP/a.txt", "a")],
+		crate::ScriptTimeLimit::Unlimited,
+	);
+	block_on(dash.build()).expect("the build succeeds");
+	assert_eq!(fs.text("late.txt").as_deref(), Some("a!"));
+}
+
+#[test]
+fn compile_files_from_a_hook_compiles_the_files_inside_the_running_build() {
+	// Dash.ts compileAdditionalFiles, called from buildEnd as the
+	// generatorScripts plugin does.
+	let (dash, fs, _) = with_extension(
+		"export default ({ compileFiles }) => ({ transformPath: (p) => p.replace('BP/', 'out/'), read: (p) => p.endsWith('v.txt') ? 'virtual ' + p : undefined, async buildEnd() { await compileFiles(['BP/v.txt']) } })",
+		"",
+		&[],
+		crate::ScriptTimeLimit::Unlimited,
+	);
+	block_on(dash.build()).expect("the build succeeds");
+	assert_eq!(fs.text("out/v.txt").as_deref(), Some("virtual BP/v.txt"));
+}
+
+#[test]
+fn a_data_value_json_stringify_refuses_stops_the_build() {
+	// TransformFiles.ts transformFile: JSON.stringify throws inside the
+	// build, which rejects.
+	let (dash, _, _) = with_extension(
+		"export default () => ({ transformPath: (p) => p.replace('BP/', 'out/'), read: () => { const a = {}; a.a = a; return a } })",
+		"",
+		&[("BP/a.json", "{}")],
+		crate::ScriptTimeLimit::Unlimited,
+	);
+	let error = block_on(dash.build()).expect_err("the build stops");
+	assert_eq!(
+		error.to_string(),
+		"cannot write the data of BP/a.json: TypeError: Converting circular structure to JSON"
+	);
+}
+
+#[test]
+fn a_script_object_passes_from_hook_to_hook_as_one_object() {
+	// AllPlugins.ts runLoadHooks hands each plugin what the last returned or
+	// changed; a Rust plugin in between sees the object as JSON.
+	let (dash, fs, _) = with_extension(
+		"export default () => ({ transformPath: (p) => p.replace('BP/', 'out/'), read: () => ({ n: 1 }), load(p, data) { data.n++; data.self = data }, transform(p, data) { delete data.self; data.n *= 10 } })",
+		"",
+		&[("BP/a.json", "{}")],
+		crate::ScriptTimeLimit::Unlimited,
+	);
+	block_on(dash.build()).expect("the build succeeds");
+	assert_eq!(fs.text("out/a.json").as_deref(), Some(r#"{"n":20}"#));
 }

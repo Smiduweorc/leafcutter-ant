@@ -12,14 +12,13 @@ something odd that a project can observe, leafcutter-ant does the same odd
 thing and lists it in the quirk ledger below. The plan, milestones and open
 questions are in `PRD-native-dash-compiler.md` next to this repository.
 
-It builds projects whose plugins are the built-ins that need no
-JavaScript: `simpleRewrite`, `rewriteForPackaging`, `entityIdentifierAlias`,
-`formatVersionCorrection`, `floatPropertyTruncationFix`, `contentsFile` and
-`typeScript`. The built-ins that run user JavaScript (`moLang`, the custom
-components, `customCommands`, `generatorScripts`) and plugins from extensions
-need an embedded JavaScript runtime, which comes next; until then a plugin
-list that names one gets an error on the console for it and the build goes
-on without it. Hot updates and `watch` come after that.
+It builds projects whose plugins are the built-ins `simpleRewrite`,
+`rewriteForPackaging`, `entityIdentifierAlias`, `formatVersionCorrection`,
+`floatPropertyTruncationFix`, `contentsFile` and `typeScript`, and compiler
+plugins from extensions, which run in an embedded JavaScript engine
+(QuickJS). The built-ins that still need porting (`moLang` and the custom
+components) get an error on the console when a plugin list names them, and
+the build goes on without them. Hot updates and `watch` come after that.
 
 The library's runtime dependencies are `indexmap`, `ryu-js`, `regress`,
 `futures-util`, `swc`, `swc_common`, `serde_json` and `rquickjs`, each with
@@ -29,8 +28,8 @@ let `cargo update` move them.
 
 ## leafcutter-ant is not for you if you
 
-- need JavaScript plugins, Molang functions, custom components, custom
-  commands or generator scripts today, or a watch mode. Use TS Dash, through
+- need Molang functions or custom components today, or a watch mode. Use
+  TS Dash, through
   [deno-dash-compiler](https://github.com/bridge-core/deno-dash-compiler) or
   the bridge. editor.
 - want features TS Dash does not have. Nothing new goes in until the output
@@ -66,7 +65,9 @@ itself, four ways (production and development, each with and without a
 separate output file system, as the Deno CLI's `--out` gives one), and
 records what every build wrote, removed and output in
 `<project>.expected.json`; `tests/corpus.rs` builds the same projects with
-leafcutter-ant and compares. CI records the vectors and the corpus again and
+leafcutter-ant and compares. Both answer `requestJsonData` from the vendored
+`validCommand.json`, and serve a script's `https://` imports from the bodies
+the project's `corpus.json` lists. CI records the vectors and the corpus again and
 fails if the committed copies differ, so the files cannot drift from what the
 JavaScript does. To record them yourself:
 
@@ -89,6 +90,44 @@ can run them on a single-threaded runtime, and a browser host can back them
 with a page's async file APIs. `fs::NativeFileSystem` is the local disk. It
 lists directories sorted by name, writes through a temporary file that is
 renamed over the target, and blocks the thread that polls it.
+
+## What scripts may touch
+
+Extension plugins, generator scripts and custom commands are JavaScript
+modules that run in QuickJS, through rquickjs, in the same process as the
+compiler. The engine is a runtime with no walls of its own: a script can do
+anything its JavaScript can reach, so what it can reach is kept to this list.
+
+- **Globals**: ECMAScript's own (`Object`, `JSON`, `Promise`, `Map`,
+  `RegExp`, typed arrays and the rest), plus `console` (`log`, `info`,
+  `warn`, `error`, `time`, `timeEnd`, all going to the host's `Console`),
+  and `Blob` and `File` (`text`, `arrayBuffer`, `bytes`, `slice`, `size`,
+  `type`, `name`, `lastModified`). There is no `fetch`, no timers, no
+  `process`, `Deno` or `require`, and no file or network access of the
+  engine's own.
+- **Modules**, resolved as js-runtime 0.4.5 resolves them: the modules Dash
+  registers (`@bridge/compiler` with the build `mode`; `@bridge/generate`,
+  `pathe` and `path-browserify` while generator scripts run), relative paths
+  with `.ts` then `.js` appended, `.json` files read with json5, and
+  `https://` URLs, which only the host fetches (`DashOptions::https_imports`:
+  the CLI fetches them, a host can refuse them all). Every path goes through
+  the host's file system.
+- **The plugin context** (`TCompilerPluginFactory.ts`): `options`,
+  `console`, `fileSystem` and `outputFileSystem` (the host's file systems,
+  rooted where the host roots them), `projectConfig`, `projectRoot`,
+  `packType`, `fileType`, `targetVersion`, `requestJsonData` (the host's
+  callback), `getAliases`, `getAliasesWhere`, `getFileMetadata`,
+  `addFileDependencies`, `getOutputPath`, `unlinkOutputFiles`,
+  `hasComMojangDirectory`, `compileFiles`, `jsonStringifyWithFloatFix` and
+  `jsRuntime`, Dash's script runtime.
+- **Time**: unlimited by default, as in TS Dash; a host can stop a script
+  that runs too long without returning (`DashOptions::script_time_limit`),
+  and the hook that ran it fails with an error.
+
+A file's data crosses into the engine as the objects `JSON.parse` would
+make, and comes back the way `JSON.stringify` writes it, without recursion
+in either direction. An object a script returns stays in the engine, so the
+next script to see the file gets that same object, as in TS Dash.
 
 ## Quick start
 
@@ -152,7 +191,7 @@ separate branch, and this table is that branch's checklist.
 | Error columns count UTF-16 units | json5 counts code units, and only `\n` starts a line | `the_position_is_the_column_after_the_offending_character`, `json5.json` |
 | An invalid escaped key character is reported 5 columns back | json5 subtracts 5 from the column | `an_escaped_key_character_that_cannot_be_in_a_key_reports_five_columns_back` |
 | A project config whose `compiler` is `null` stops the build | `isCompilerActivated` checks `compiler !== undefined`, then reads `compiler.plugins` and throws (`Dash.ts`) | `a_null_compiler_stops_the_build_as_the_type_error_does_in_ts_dash` |
-| A plugin list entry named like a property of `Object.prototype`, such as `constructor`, fails as an extension plugin | the extension plugin map is a plain object, so `plugins["constructor"]` finds the inherited function and Dash tries to run it as a module (`AllPlugins.ts`) | `plugin_list_entries_name_builtins_and_unknown_or_javascript_plugins_are_reported` |
+| A plugin list entry named like a property of `Object.prototype`, such as `constructor`, fails as an extension plugin | the extension plugin map is a plain object, so `plugins["constructor"]` finds the inherited function and Dash tries to run it as a module (`AllPlugins.ts`) | `plugin_list_entries_name_builtins_extensions_and_unknown_plugins` |
 | A plugin that ignores a file drops every plugin with the same id from that file's hooks | `createImplementedHooksMap` filters by plugin id, and a plugin listed twice has one id (`DashFile.ts`) | `a_plugin_that_ignores_a_file_is_left_out_of_its_per_file_hooks_by_id` |
 | A `load` or `transform` chain that ends in `null` keeps the data it started with, even after a plugin replaced it | the chain's result goes through `?? file.data` (`LoadFiles.ts`, `TransformFiles.ts`) | `load_and_transform_chains_fall_back_to_the_start_when_they_end_in_null` |
 | Virtual files an `include` hook adds come before every pack file, in processing and in the cache file | `loadAll` adds `[path, { isVirtual }]` entries at once and the pack files afterwards (`IncludedFiles.ts`) | `included_virtual_files_come_first_and_included_paths_after_the_packs` |
@@ -186,11 +225,24 @@ Where leafcutter-ant differs from TS Dash, and why:
 | A `"__proto__"` key in a file the Deno CLI reads through its own `FileSystem.readJson` | that path uses json5 2.2.3, which keeps the key | drops it | leafcutter-ant reads json5 as 2.2.1 everywhere, as the plugins inside Dash do |
 | File or pack definitions that are not an array of objects with a string `id` | takes them and fails later, where a plugin asks for a file type | refused when the host builds `FileTypes` or `PackTypes` | the definitions come from the host, which can report them at startup |
 | A plugin reading a key an object lacks, where the object has a `"__proto__"` key | json5 2.2.1 makes the `"__proto__"` value the object's prototype, so the lookup finds the key there | the key is dropped and no prototype is kept, so the lookup finds nothing | JSON values here have no prototypes; modelling them is an open question (pinned by `a_proto_key_gives_the_file_no_inherited_format_version`) |
-| The order `read`, `load` and `registerAliases` hooks see files in | the order the files' reads finish | build order, with the reads still running concurrently | output must not depend on timing; it shows where two files register one alias, and the later one in build order owns it |
+| The order the hooks of different files run in | each file's hooks run as its read and every `await` before them finish, interleaved with the other files' | every file steps through its hooks at once, side by side: one step per hook and per settled promise, in build order within a step, and a script's promise jobs run first in, first out, as in one event loop | output must not depend on timing, yet scripts must interleave as they do in TS Dash: two generator scripts that both import `@bridge/generate` each get their own copy of it only because neither has finished importing it when the other starts. Where two files register one alias, the one that gets there later in this order owns it |
 | Two files with the same output path | both writes run at once and either may land last | the later file in build order wins | the same |
 | A copied file and a written file with the same output path | the copy starts first and usually lands first | copies finish before any write starts, so the written file wins | the same |
 | Two extensions that declare the same compiler plugin id | the manifest read last wins | the manifest listed last wins | the same |
 | The order of a directory listing | the operating system's, through Deno's `readDir` | sorted by the bytes of each name | the listing order becomes the order of contents lists and of the cache file, and must not change from one machine to the next |
+| Error messages from the engine | V8's | QuickJS's, which match V8's for most `TypeError` and `SyntaxError` texts but not all; they reach only the console | a different engine |
+| A script's `console.log` of something that is not a string | the host console formats it (Deno's inspector in the CLI) | strings as they are, errors as `String(error)`, functions as `[Function: name]`, anything else as its JSON, or `String(value)` where it has none | the host's `Console` takes text |
+| A plugin factory that throws, or returns something that is not an object | the rejection of `addPlugin` goes unhandled, which ends the Deno CLI | `Failed to create plugin <id>: <error>` on the console, and the build goes on without the plugin | a library does not end the process |
+| A factory that waits (an `async` factory) | its hooks are registered when it finishes, possibly after other plugins' hooks or after the build started | every factory is waited for in plugin list order before the build starts | plugin order must not depend on timing |
+| An `include` entry that is neither a path nor a `[path, options]` pair | `loadAll` throws and the build stops | skipped | |
+| A hook whose promise never settles | the build waits forever | once nothing can settle it any more, the hook fails with `Error: the promise can never settle: nothing it waits for is still running` and the build goes on | a build should end |
+| A script that runs without returning | runs forever | the same, unless the host sets `script_time_limit`, which stops it with an error the hook reports | |
+| A script's object that a Rust built-in changes in place (`formatVersionCorrection`'s `transform`) | the built-in changes the script's object, which a script that kept it sees | the built-in replaces it with a JSON copy it changes | the built-ins work on JSON |
+| `getFileMetadata(path).set(key, value)` | keeps `value` itself | keeps what `JSON.stringify` makes of it; `undefined` removes the key | the cache file stores metadata as JSON anyway |
+| A non-string alias, required file or path a hook returns | kept as it is, and written to the cache file as JSON | aliases are kept as JSON values; required files and paths go through `String(value)` | the file model holds strings |
+| The modules `@molang/expressions`, `@molang/core` and `molang` | registered in Dash's script runtime | missing until the Molang port (M3) | not ported yet |
+| `projectConfig`, `fileType` and `packType` in the plugin context | mc-project-core's objects | the same classes for `projectConfig` (`get`, `resolvePackPath`, `getRelativePackRoot`, `getAbsolutePackRoot`, `getAvailablePacks`, `getAvailablePackPaths`) and `packType` (`all`, `get`, `getId`, `getFromId`, `addExtensionPackType`); `fileType` has `all`, `get`, `getId`, `getIds` and `isJsonFile`, with detection run by the compiler's own port | Dash never calls the rest; `fileType` shares the compiler's cache so scripts and built-ins see one detection |
+| `File` and `Blob` | the host's (Deno's, a browser's) | a shim with `text`, `arrayBuffer`, `bytes`, `slice`, `size`, `type`, `name` and `lastModified`, and no `stream` | the engine has no web APIs |
 | pathe's `resolve` and `relative` on a path that climbs above the working directory | resolved against `process.cwd()` in the Deno CLI and against `/` in the editor | resolved against `/` | the result then depends on no process state; relative paths that stay below the working directory give the same answer either way |
 
 ## Tasks
@@ -266,7 +318,8 @@ one of them, change it in black-garden-ants first, then copy it here.
 | `crates/leafcutter-ant/` | The library: everything the compiler does |
 | `crates/leafcutter-ant/tests/vectors/` | Golden vectors recorded by `tools/parity` |
 | `crates/leafcutter-ant/tests/corpus/` | Small projects for the parity harness, each next to the output TS Dash gave for it |
-| `crates/leafcutter-ant/tests/data/` | `fileDefinitions.json` and `packDefinitions.json` from bridge-core/editor-packages at commit `10e360dc`, the data TS Dash fetches at run time |
+| `crates/leafcutter-ant/tests/data/` | `fileDefinitions.json`, `packDefinitions.json` and `validCommand.json` from bridge-core/editor-packages at commit `10e360dc`, the data TS Dash fetches at run time |
+| `crates/leafcutter-ant/src/js/layer/` | The JavaScript the engine runs before any script: js-runtime's module loader, the `File` shim and console, and the parts of TS Dash that handle scripts' values, copied from the published packages |
 | `crates/leafcutter-ant-cli/` | The `leafcutter` binary: arguments in, library call, output out, and the `~/.dash` cache |
 | `assets/logo.png` | The logo, drawn by grml |
 | `tools/parity/` | The pinned JavaScript that records the vectors, json5's tables and the corpus output |

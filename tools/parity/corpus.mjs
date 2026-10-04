@@ -2,6 +2,9 @@
 // 0.13.0 and writes what each build changed to <project>.expected.json, which
 // the Rust test crates/leafcutter-ant/tests/corpus.rs compares against.
 //
+// Projects with scripts are built the same way; corpus.json can list the
+// bodies of `https://` URLs their scripts import.
+//
 // Each project is built four times, the ways the Deno CLI can build it:
 // `production` and `development` write into the project, and the `-out`
 // variants give Dash a separate output file system, as `--out` does. Every
@@ -52,7 +55,25 @@ const variants = [
 	["development-out", "development", true],
 ]
 
+// The data the custom commands plugin asks for, vendored from the
+// editor-packages commit the definitions come from.
+const validCommand = readFileSync(new URL("../../crates/leafcutter-ant/tests/data/validCommand.json", import.meta.url), "utf8")
+async function requestJsonData(dataPath) {
+	if (dataPath === "data/packages/minecraftBedrock/location/validCommand.json") return JSON.parse(validCommand)
+	throw new Error(`no data at ${dataPath}`)
+}
+
+// Scripts' `https://` imports: the project's corpus.json lists what each
+// URL serves; any other URL fails as an unreachable host does.
+function serveHttps(served) {
+	globalThis.fetch = async (url) => {
+		if (served && Object.hasOwn(served, url)) return new Response(served[url])
+		throw new TypeError("fetch failed")
+	}
+}
+
 async function build(project, mode, separateOutput, settings) {
+	serveHttps(settings.https)
 	const work = mkdtempSync(nodeJoin(tmpdir(), "leafcutter-corpus-"))
 	const root = nodeJoin(work, "project")
 	const out = nodeJoin(work, "out")
@@ -70,9 +91,7 @@ async function build(project, mode, separateOutput, settings) {
 		verbose: false,
 		packType: new DefinedPackType(undefined),
 		fileType: new CachedFileType(),
-		requestJsonData: async () => {
-			throw new Error("requestJsonData is not part of the non-JavaScript corpus")
-		},
+		requestJsonData,
 	})
 	await dash.setup()
 	await dash.build()

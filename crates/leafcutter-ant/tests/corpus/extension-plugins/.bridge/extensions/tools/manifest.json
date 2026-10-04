@@ -1,0 +1,12 @@
+{
+	"name": "tools",
+	"compiler": {
+		"plugins": {
+			"stamp": "plugins/stamp.js",
+			"broken": "plugins/broken.js",
+			"noDefault": "plugins/nodefault.js",
+			"throwsAtTop": "plugins/throws.ts",
+			"missingFile": "plugins/missing.js"
+		}
+	}
+}

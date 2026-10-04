@@ -143,6 +143,9 @@ pub(crate) fn dash_with(
 	let options = crate::DashOptions {
 		config: "./config.json".to_owned(),
 		compiler_config: None,
+		request_json_data: no_request_json_data(),
+		https_imports: crate::HttpsImports::Refused,
+		script_time_limit: crate::ScriptTimeLimit::Unlimited,
 		mode: crate::Mode::Development,
 		console: recorder.clone(),
 		verbose: false,
@@ -154,9 +157,17 @@ pub(crate) fn dash_with(
 		)
 		.expect("file definitions"),
 	};
-	let mut dash = crate::Dash::new(fs, None, options);
+	let dash = crate::Dash::new(fs, None, options);
 	futures_executor::block_on(dash.setup()).expect("setup succeeds");
 	(dash, recorder)
+}
+
+/// A `requestJsonData` that has no data.
+pub(crate) fn no_request_json_data() -> crate::RequestJsonData {
+	Rc::new(|path: &str| {
+		let message = format!("Error: no data at {path}");
+		Box::pin(std::future::ready(Err(message)))
+	})
 }
 
 /// A vector file as JSON.

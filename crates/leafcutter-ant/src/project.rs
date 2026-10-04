@@ -175,6 +175,11 @@ impl PackTypes {
 		})
 	}
 
+	/// Every definition, in order (`packType.all`).
+	pub(crate) fn all(&self) -> impl Iterator<Item = &Value> {
+		self.definitions.iter().map(|(_, definition)| definition)
+	}
+
 	/// `getFromId(packId)`.
 	pub(crate) fn by_id(&self, id: &str) -> Option<&Value> {
 		self.definitions
@@ -355,15 +360,39 @@ impl FileTypes {
 		project: &ProjectConfig,
 		path: &str,
 	) -> Result<Option<(&str, &Value)>, FileTypeError> {
-		if let Some(found) = self.cache.borrow().get(path) {
-			return Ok(found.map(|i| (self.definitions[i].id.as_str(), &self.definitions[i].raw)));
-		}
-		let found = self.detect(project, path)?;
-		self.cache.borrow_mut().insert(path.to_owned(), found);
-		Ok(found.map(|i| (self.definitions[i].id.as_str(), &self.definitions[i].raw)))
+		Ok(self
+			.find(project, path, None, true)?
+			.map(|i| (self.definitions[i].id.as_str(), &self.definitions[i].raw)))
 	}
 
-	fn detect(&self, project: &ProjectConfig, path: &str) -> Result<Option<usize>, FileTypeError> {
+	/// `get(filePath, searchFileType, checkFileExtension)` as an index into
+	/// [`FileTypes::all`]. Only the plain lookup is cached, as in the Deno
+	/// CLI's `FileTypeImpl`.
+	pub(crate) fn find(
+		&self,
+		project: &ProjectConfig,
+		path: &str,
+		search: Option<&str>,
+		check_extension: bool,
+	) -> Result<Option<usize>, FileTypeError> {
+		let cached = search.is_none() && check_extension && !path.is_empty();
+		if cached && let Some(found) = self.cache.borrow().get(path) {
+			return Ok(*found);
+		}
+		let found = self.detect(project, path, search, check_extension)?;
+		if cached {
+			self.cache.borrow_mut().insert(path.to_owned(), found);
+		}
+		Ok(found)
+	}
+
+	fn detect(
+		&self,
+		project: &ProjectConfig,
+		path: &str,
+		search: Option<&str>,
+		check_extension: bool,
+	) -> Result<Option<usize>, FileTypeError> {
 		let extension = if path.is_empty() {
 			String::new()
 		} else {
@@ -373,8 +402,12 @@ impl FileTypes {
 			return Ok(None);
 		}
 		for (index, definition) in self.definitions.iter().enumerate() {
+			if search == Some(definition.id.as_str()) {
+				return Ok(Some(index));
+			}
 			let detect = &definition.detect;
-			if let Some(extensions) = &detect.file_extensions
+			if check_extension
+				&& let Some(extensions) = &detect.file_extensions
 				&& js::truthy(extensions)
 				&& !includes(extensions, &extension)?
 			{

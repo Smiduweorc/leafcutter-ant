@@ -125,6 +125,12 @@ impl Progress {
 		self.changed();
 	}
 
+	/// `addToTotal(amount)`.
+	pub(crate) fn add_to_total(&self, amount: u32) {
+		self.total.set(self.total.get() + amount);
+		self.changed();
+	}
+
 	pub(crate) fn advance(&self) {
 		self.current.set(self.current.get() + 1);
 		self.changed();

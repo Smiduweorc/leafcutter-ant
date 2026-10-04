@@ -76,7 +76,7 @@ impl DashFile {
 	}
 
 	/// `reset()`, after a build.
-	fn reset(&mut self) {
+	pub(crate) fn reset(&mut self) {
 		self.is_done = false;
 		self.data = None;
 		self.hooks = None;
@@ -101,6 +101,35 @@ impl IncludedFiles {
 
 	pub(crate) fn file_mut(&mut self, id: FileId) -> &mut DashFile {
 		&mut self.arena[id]
+	}
+
+	/// The file with this id, when there is one: an id a script kept from an
+	/// earlier build may be gone.
+	pub(crate) fn checked(&self, id: FileId) -> Option<&DashFile> {
+		self.arena.get(id)
+	}
+
+	pub(crate) fn checked_mut(&mut self, id: FileId) -> Option<&mut DashFile> {
+		self.arena.get_mut(id)
+	}
+
+	/// Every alias, in the order the alias map holds them
+	/// (`getAliasesWhere`).
+	pub(crate) fn alias_values(&self) -> Vec<Value> {
+		self.aliases
+			.iter()
+			.map(|(key, &id)| match key {
+				AliasKey::String(s) => Value::String(s.clone()),
+				AliasKey::Number(bits) => Value::Number(f64::from_bits(*bits)),
+				AliasKey::Bool(b) => Value::Bool(*b),
+				AliasKey::Null => Value::Null,
+				AliasKey::Object(_) => self.arena[id]
+					.aliases
+					.iter()
+					.find(|alias| alias.key == *key)
+					.map_or(Value::Null, |alias| alias.value.clone()),
+			})
+			.collect()
 	}
 
 	/// `all()`: every file, in insertion order.

@@ -15,7 +15,7 @@ use leafcutter_ant::console::Console;
 use leafcutter_ant::fs::{FileSystem, NativeFileSystem};
 use leafcutter_ant::json::{Indent, Value, parse_json5, stringify};
 use leafcutter_ant::project::{DetectMatcher, FileTypes, PackTypes};
-use leafcutter_ant::{Dash, DashOptions, Mode};
+use leafcutter_ant::{Dash, DashOptions, HttpsImports, Mode, RequestJsonData, ScriptTimeLimit};
 
 use local_cache::LocalCache;
 
@@ -26,8 +26,8 @@ const HELP: &str = "usage: leafcutter build [--mode development|production] [--o
        leafcutter [--version | --help]
 
 leafcutter-ant is a Rust port of the Dash compiler for Minecraft Bedrock
-add-ons. It runs the built-in plugins that need no JavaScript; plugins
-written in JavaScript are not supported yet.
+add-ons. It runs the built-in plugins, generator scripts, custom commands
+and extension plugins; molang and custom components are not supported yet.
 
 build   Build the project in the working directory. The project config is
         dash-config.json when that file exists, else config.json.
@@ -229,7 +229,8 @@ fn build(args: BuildArgs) -> Result<(), String> {
 		DetectMatcher::Glob,
 	)
 	.map_err(|error| format!("the file definitions: {error}"))?;
-	let mut dash = Dash::new(
+	let cache = Rc::new(cache);
+	let dash = Dash::new(
 		fs,
 		output,
 		DashOptions {
@@ -240,6 +241,12 @@ fn build(args: BuildArgs) -> Result<(), String> {
 			verbose: true,
 			pack_types,
 			file_types,
+			request_json_data: request_json_data(Rc::clone(&cache)),
+			https_imports: HttpsImports::Fetch(Rc::new(|url: &str| {
+				let fetched = fetch(url).map(String::into_bytes);
+				Box::pin(std::future::ready(fetched))
+			})),
+			script_time_limit: ScriptTimeLimit::Unlimited,
 		},
 	);
 	futures_executor::block_on(async {
@@ -247,6 +254,38 @@ fn build(args: BuildArgs) -> Result<(), String> {
 		dash.build().await
 	})
 	.map_err(|error| error.to_string())
+}
+
+/// The body at `url`, as text.
+fn fetch(url: &str) -> Result<String, String> {
+	ureq::get(url)
+		.call()
+		.and_then(|mut response| response.body_mut().read_to_string())
+		.map_err(|error| format!("TypeError: cannot fetch {url}: {error}"))
+}
+
+/// The Deno CLI's `requestJsonData`: the cached copy when it parses, else
+/// the file from bridge-core/editor-packages, which is then cached.
+fn request_json_data(cache: Rc<LocalCache>) -> RequestJsonData {
+	Rc::new(move |data_path: &str| {
+		let result = (|| {
+			if let Some(cached) = cache.get(data_path)
+				&& let Ok(value) = parse_json5(&cached)
+			{
+				return Ok(value);
+			}
+			let url = data_path.replacen(
+				"data/",
+				"https://raw.githubusercontent.com/bridge-core/editor-packages/main/",
+				1,
+			);
+			let value = parse_json5(&fetch(&url)?)
+				.map_err(|error| format!("SyntaxError: {url} is not JSON: {error}"))?;
+			cache.save(data_path, &stringify(&value, Indent::None));
+			Ok(value)
+		})();
+		Box::pin(std::future::ready(result))
+	})
 }
 
 /// Rust ignores SIGPIPE, so a reader that goes away early (`leafcutter --help | head -c0`)

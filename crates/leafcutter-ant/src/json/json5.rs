@@ -26,6 +26,15 @@ pub fn parse_json5(source: &str) -> Result<Value, Json5Error> {
 	Parser::new(source).parse()
 }
 
+/// Reads JSON that `JSON.stringify` wrote, keeping `"__proto__"` keys: such a
+/// key there is an own property of the value that was written, as
+/// `JSON.parse` would make it again.
+pub(crate) fn parse_json_text(source: &str) -> Result<Value, Json5Error> {
+	let mut parser = Parser::new(source);
+	parser.keep_proto = true;
+	parser.parse()
+}
+
 /// Why json5 refused its input, and where.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Json5Error {
@@ -186,6 +195,7 @@ struct Parser<'a> {
 	buffer: Text,
 	double_quote: bool,
 	negative: bool,
+	keep_proto: bool,
 }
 
 type Step<T> = Result<Option<T>, Json5Error>;
@@ -204,6 +214,7 @@ impl<'a> Parser<'a> {
 			buffer: Text::default(),
 			double_quote: false,
 			negative: false,
+			keep_proto: false,
 		}
 	}
 
@@ -914,7 +925,7 @@ impl<'a> Parser<'a> {
 				let key = key.unwrap_or_default();
 				// `parent["__proto__"] = value` sets the prototype (or does
 				// nothing, for a primitive); it never creates a property.
-				if key != "__proto__" {
+				if key != "__proto__" || self.keep_proto {
 					object.insert(key, value);
 				}
 				self.parse_state = ParseState::AfterPropertyValue;

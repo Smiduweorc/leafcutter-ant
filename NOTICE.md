@@ -14,7 +14,11 @@ given here.
 | `is_glob` and `is_extglob` in `crates/leafcutter-ant/src/glob/mod.rs` | [is-glob](https://github.com/micromatch/is-glob) 4.0.3 and [is-extglob](https://github.com/micromatch/is-extglob) 2.1.1 | Copyright (c) 2014-2017, Jon Schlinkert; Copyright (c) 2014-2016, Jon Schlinkert |
 | `crates/leafcutter-ant/src/js/transform.rs` is a port of `Runtime.transformSource` and `Transform/main.ts` | [@bridge-editor/js-runtime](https://github.com/bridge-core/bridge-js-runtime) 0.4.5 | Copyright (c) 2022 bridge-team |
 | `crates/leafcutter-ant/src/js/magic_string.rs` is a port of `overwrite`, `slice` and `toString` | [magic-string](https://github.com/rich-harris/magic-string) 0.26.7 | Copyright 2018 Rich Harris |
-| `crates/leafcutter-ant/tests/data/fileDefinitions.json` and `packDefinitions.json`, unchanged | [bridge-core/editor-packages](https://github.com/bridge-core/editor-packages) at `10e360dc24194651b814994467ebdb8f0403c62e` | Copyright (c) 2021 bridge-team |
+| `crates/leafcutter-ant/src/js/layer/runtime.js` holds js-runtime's `Runtime` class | [@bridge-editor/js-runtime](https://github.com/bridge-core/bridge-js-runtime) 0.4.5 | Copyright (c) 2022 bridge-team |
+| `crates/leafcutter-ant/src/js/layer/dash.js` holds code copied from the published builds of these three packages: the custom commands and generator scripts plugins with their helpers, `jsonStringifyWithFloatFix`, `setObjectAt`, `tokenizeCommand`, `castType`, and the project model classes | [@bridge-editor/dash-compiler](https://github.com/bridge-core/dash-compiler) 0.13.0, [@bridge-editor/common-utils](https://github.com/bridge-core/common-utils) 0.3.3 and [@bridge-editor/mc-project-core](https://github.com/bridge-core/mc-project-core) 0.5.0 | Copyright (c) 2021 bridge-team |
+| `crates/leafcutter-ant/src/js/layer/pathe.js`, unchanged | [pathe](https://github.com/unjs/pathe) 2.0.2 | Copyright (c) Pooya Parsa <pooya@pi0.io> - Daniel Roe <daniel@roe.dev> |
+| `crates/leafcutter-ant/src/js/layer/path-browserify.js`, unchanged | [path-browserify](https://github.com/browserify/path-browserify) 1.0.1, which is Node.js's `path` module | Copyright (c) 2013 James Halliday; Copyright Joyent, Inc. and other Node contributors |
+| `crates/leafcutter-ant/tests/data/fileDefinitions.json`, `packDefinitions.json` and `validCommand.json`, unchanged | [bridge-core/editor-packages](https://github.com/bridge-core/editor-packages) at `10e360dc24194651b814994467ebdb8f0403c62e` | Copyright (c) 2021 bridge-team |
 
 ## MIT License
 

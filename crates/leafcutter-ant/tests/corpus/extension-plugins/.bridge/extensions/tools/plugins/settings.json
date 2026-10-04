@@ -1,0 +1,1 @@
+{ "floatPaths": ["**/value"], "skip": ".skip" }

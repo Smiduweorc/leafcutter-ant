@@ -33,13 +33,6 @@ use crate::wasm_web;
 /// path ending in `.js` is JavaScript, anything else TypeScript) and
 /// `basename` is path-browserify's `basename(path)`, which swc gets as the
 /// file name. An error is the message the loader would reject with.
-#[cfg_attr(
-	not(test),
-	expect(
-		dead_code,
-		reason = "the script loader, which comes with the engine, calls it"
-	)
-)]
 pub(crate) fn transform_source(path: &str, basename: &str, source: &str) -> Result<String, String> {
 	let is_js = path.ends_with(".js");
 	let syntax_name = if is_js { "ecmascript" } else { "typescript" };

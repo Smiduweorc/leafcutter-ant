@@ -3,7 +3,9 @@
 //! each build wrote, removed and output with `<project>.expected.json`.
 
 use std::collections::BTreeMap;
+use std::future::Future;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use std::rc::Rc;
 
 use futures_executor::block_on;
@@ -11,7 +13,7 @@ use leafcutter_ant::console::Console;
 use leafcutter_ant::fs::{FileSystem, NativeFileSystem};
 use leafcutter_ant::json::parse_json5;
 use leafcutter_ant::project::{DetectMatcher, FileTypes, PackTypes};
-use leafcutter_ant::{Dash, DashOptions, Mode};
+use leafcutter_ant::{Dash, DashOptions, HttpsImports, Mode, ScriptTimeLimit};
 
 struct Quiet;
 
@@ -30,6 +32,34 @@ fn definitions(name: &str) -> leafcutter_ant::json::Value {
 	let text = std::fs::read_to_string(manifest_dir().join("tests/data").join(name))
 		.expect("definitions are readable");
 	parse_json5(&text).expect("definitions are JSON")
+}
+
+/// The data the custom commands plugin asks for, vendored from the
+/// editor-packages commit the definitions come from; corpus.mjs answers the
+/// same way.
+fn request_json_data(
+	path: &str,
+) -> Pin<Box<dyn Future<Output = Result<leafcutter_ant::json::Value, String>>>> {
+	let result = match path {
+		"data/packages/minecraftBedrock/location/validCommand.json" => {
+			Ok(definitions("validCommand.json"))
+		}
+		other => Err(format!("Error: no data at {other}")),
+	};
+	Box::pin(std::future::ready(result))
+}
+
+/// Scripts' `https://` imports: corpus.json lists what each URL serves, and
+/// any other URL fails, as corpus.mjs's `fetch` does.
+fn https_imports(served: &serde_json::Value) -> HttpsImports {
+	let served = served.clone();
+	HttpsImports::Fetch(Rc::new(move |url: &str| {
+		let body = match served.get(url).and_then(serde_json::Value::as_str) {
+			Some(body) => Ok(body.as_bytes().to_vec()),
+			None => Err("TypeError: fetch failed".to_owned()),
+		};
+		Box::pin(std::future::ready(body))
+	}))
 }
 
 /// Every file under `dir`, by path relative to it with `/` separators.
@@ -125,8 +155,11 @@ fn build(project: &Path, mode: Mode, separate_output: bool) -> serde_json::Value
 		pack_types: PackTypes::new(definitions("packDefinitions.json")).expect("pack definitions"),
 		file_types: FileTypes::new(definitions("fileDefinitions.json"), DetectMatcher::Glob)
 			.expect("file definitions"),
+		request_json_data: Rc::new(request_json_data),
+		https_imports: https_imports(&settings["https"]),
+		script_time_limit: ScriptTimeLimit::Unlimited,
 	};
-	let mut dash = Dash::new(fs, output, options);
+	let dash = Dash::new(fs, output, options);
 	block_on(dash.setup()).expect("setup succeeds");
 	block_on(dash.build()).expect("the build succeeds");
 

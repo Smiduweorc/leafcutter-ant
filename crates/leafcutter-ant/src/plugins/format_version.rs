@@ -3,12 +3,15 @@
 //! carries (blocks, items and fogs in the vendored definitions), and writes
 //! those files as compact JSON.
 
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
 use crate::fs;
 use crate::js::{self, Prop};
 use crate::json::{Indent, Object, Value, parse_json5, stringify};
-use crate::plugin::{Context, Data, FileHandle, Finalized, Hook, Plugin};
+use crate::plugin::{
+	Context, Data, Dependencies, FileHandle, Finalized, Hook, HookFuture, Plugin, ready,
+};
 
 pub(crate) struct FormatVersionCorrection {
 	/// The ids of the file types that have a `formatVersionMap`.
@@ -16,7 +19,7 @@ pub(crate) struct FormatVersionCorrection {
 	/// `needsTransformationCache`, which is read only for a `true` result;
 	/// a `false` one is stored and then computed again on every call. That
 	/// costs time, not output.
-	cache: HashMap<String, bool>,
+	cache: RefCell<HashMap<String, bool>>,
 }
 
 impl FormatVersionCorrection {
@@ -34,23 +37,23 @@ impl FormatVersionCorrection {
 			.collect();
 		FormatVersionCorrection {
 			to_transform,
-			cache: HashMap::new(),
+			cache: RefCell::default(),
 		}
 	}
 
-	fn needs_transformation(&mut self, cx: &Context, path: &str) -> Result<bool, String> {
+	fn needs_transformation(&self, cx: &Context, path: &str) -> Result<bool, String> {
 		if path.is_empty() {
 			return Ok(false);
 		}
-		if self.cache.get(path) == Some(&true) {
+		if self.cache.borrow().get(path) == Some(&true) {
 			return Ok(true);
 		}
 		let id = cx
 			.file_types
-			.id(&cx.project, path)
+			.id(&cx.project(), path)
 			.map_err(|e| e.to_string())?;
 		let needs = self.to_transform.contains(&id);
-		self.cache.insert(path.to_owned(), needs);
+		self.cache.borrow_mut().insert(path.to_owned(), needs);
 		Ok(needs)
 	}
 }
@@ -76,33 +79,18 @@ fn assign(object: &mut Object, key: &str, value: Prop<'_>) {
 	}
 }
 
-impl Plugin for FormatVersionCorrection {
-	fn hooks(&self) -> &[Hook] {
-		&[
-			Hook::Ignore,
-			Hook::Read,
-			Hook::Load,
-			Hook::Transform,
-			Hook::FinalizeBuild,
-		]
-	}
-
-	fn ignore(&mut self, cx: &Context, path: &str) -> Result<bool, String> {
+impl FormatVersionCorrection {
+	fn ignore(&self, cx: &Context, path: &str) -> Result<bool, String> {
 		Ok(!self.needs_transformation(cx, path)?)
 	}
 
 	/// The file as json5. A file that does not parse is reported and read as
 	/// nothing, so it is copied as it is.
-	fn read(
-		&mut self,
-		cx: &Context,
-		path: &str,
-		file: FileHandle<'_>,
-	) -> Result<Option<Data>, String> {
+	fn read(&self, cx: &Context, path: &str, file: FileHandle<'_>) -> Result<Option<Data>, String> {
 		if matches!(file, FileHandle::None) || !self.needs_transformation(cx, path)? {
 			return Ok(None);
 		}
-		let FileHandle::File(bytes) = file else {
+		let FileHandle::File(bytes, _) = file else {
 			return Ok(None);
 		};
 		match parse_json5(&fs::text(bytes)) {
@@ -115,7 +103,7 @@ impl Plugin for FormatVersionCorrection {
 		}
 	}
 
-	fn load(&mut self, cx: &Context, path: &str, _data: &mut Data) -> Result<Option<Data>, String> {
+	fn load(&self, cx: &Context, path: &str, _data: &mut Data) -> Result<Option<Data>, String> {
 		self.needs_transformation(cx, path)?;
 		Ok(None)
 	}
@@ -123,18 +111,13 @@ impl Plugin for FormatVersionCorrection {
 	/// `format_version` looked up in the map, which is a plain object: a
 	/// version named like a property of `Object.prototype` finds that
 	/// property.
-	fn transform(
-		&mut self,
-		cx: &Context,
-		path: &str,
-		data: &mut Data,
-	) -> Result<Option<Data>, String> {
+	fn transform(&self, cx: &Context, path: &str, data: &mut Data) -> Result<Option<Data>, String> {
 		if !self.needs_transformation(cx, path)? {
 			return Ok(None);
 		}
 		let definition = cx
 			.file_types
-			.get(&cx.project, path)
+			.get(&cx.project(), path)
 			.map_err(|e| e.to_string())?;
 		let Some(map) =
 			definition.and_then(
@@ -148,7 +131,10 @@ impl Plugin for FormatVersionCorrection {
 		};
 		// The contents file's shared list is an array, which has no
 		// format_version.
-		let Data::Value(Value::Object(content)) = data else {
+		if matches!(data, Data::Shared(_)) {
+			return Ok(None);
+		}
+		let Some(Value::Object(content)) = data.json_mut(cx)? else {
 			return Ok(None);
 		};
 		let Some(version) = content
@@ -169,25 +155,78 @@ impl Plugin for FormatVersionCorrection {
 		Ok(None)
 	}
 
-	fn finalize_build(
-		&mut self,
-		cx: &Context,
-		path: &str,
-		data: &Data,
-	) -> Result<Finalized, String> {
+	fn finalize_build(&self, cx: &Context, path: &str, data: &Data) -> Result<Finalized, String> {
 		if !self.needs_transformation(cx, path)? {
 			return Ok(Finalized::Undefined);
 		}
-		let json = match data {
-			Data::Value(value) => stringify(value, Indent::None),
-			Data::Shared(value) => stringify(&value.borrow(), Indent::None),
-		};
-		Ok(Finalized::Data(Data::Value(Value::String(json))))
+		// JSON.stringify(undefined) is undefined, which leaves the file to
+		// the next plugin.
+		Ok(match data.json(cx)? {
+			Some(value) => {
+				Finalized::Data(Data::Value(Value::String(stringify(&value, Indent::None))))
+			}
+			None => Finalized::Undefined,
+		})
+	}
+}
+
+impl Plugin for FormatVersionCorrection {
+	fn hooks(&self) -> &[Hook] {
+		&[
+			Hook::Ignore,
+			Hook::Read,
+			Hook::Load,
+			Hook::Transform,
+			Hook::FinalizeBuild,
+		]
+	}
+
+	fn ignore<'a>(&'a self, cx: &'a Context, path: &'a str) -> HookFuture<'a, bool> {
+		ready(self.ignore(cx, path))
+	}
+
+	fn read<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		file: FileHandle<'a>,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.read(cx, path, file))
+	}
+
+	fn load<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.load(cx, path, data))
+	}
+
+	fn transform<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+		_dependencies: &'a Dependencies,
+	) -> HookFuture<'a, Option<Data>> {
+		ready(self.transform(cx, path, data))
+	}
+
+	fn finalize_build<'a>(
+		&'a self,
+		cx: &'a Context,
+		path: &'a str,
+		data: &'a mut Data,
+	) -> HookFuture<'a, Finalized> {
+		ready(self.finalize_build(cx, path, data))
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use futures_executor::block_on;
+
 	use crate::json::{Value, parse_json5};
 	use crate::plugin::{Data, Finalized};
 	use crate::testing::{MemoryFs, dash_with};
@@ -198,16 +237,14 @@ mod tests {
 		// so in TS Dash `fileContent.format_version` finds "1.18.30" there and
 		// the output gains `"format_version":"1.18.0"`. leafcutter-ant drops
 		// the key and models no prototype: a recorded difference.
-		let (mut dash, _) = dash_with(MemoryFs::with(&[]), r#"["formatVersionCorrection"]"#);
+		let (dash, _) = dash_with(MemoryFs::with(&[]), r#"["formatVersionCorrection"]"#);
 		let (cx, plugin) = dash.first_plugin();
 		let source = r#"{"__proto__": {"format_version": "1.18.30"}, "k": 1}"#;
 		let mut data = Data::Value(parse_json5(source).expect("json5"));
-		plugin
-			.transform(cx, "BP/blocks/a.json", &mut data)
+		block_on(plugin.transform(cx, "BP/blocks/a.json", &mut data, &Vec::new()))
 			.expect("no error");
-		let Finalized::Data(Data::Value(Value::String(json))) = plugin
-			.finalize_build(cx, "BP/blocks/a.json", &data)
-			.expect("no error")
+		let Finalized::Data(Data::Value(Value::String(json))) =
+			block_on(plugin.finalize_build(cx, "BP/blocks/a.json", &mut data)).expect("no error")
 		else {
 			panic!("finalizeBuild gives a string");
 		};
