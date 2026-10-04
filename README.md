@@ -14,9 +14,9 @@ questions are in `PRD-native-dash-compiler.md` next to this repository.
 
 It builds projects whose plugins are the built-ins `simpleRewrite`,
 `rewriteForPackaging`, `entityIdentifierAlias`, `formatVersionCorrection`,
-`floatPropertyTruncationFix`, `contentsFile` and `typeScript`, and compiler
-plugins from extensions, which run in an embedded JavaScript engine
-(QuickJS). The built-ins that still need porting (`moLang` and the custom
+`floatPropertyTruncationFix`, `contentsFile`, `typeScript` and
+`generatorScripts`, and compiler plugins from extensions; scripts run in an
+embedded JavaScript engine (QuickJS). The built-ins that still need porting (`moLang` and the custom
 components) get an error on the console when a plugin list names them, and
 the build goes on without them. Hot updates and `watch` come after that.
 
@@ -209,6 +209,12 @@ separate branch, and this table is that branch's checklist.
 | The list holds the path each `transformPath` call was given, `contents.json` included; a file an earlier plugin already moved out of the pack is left out | `transformPath` pushes its argument and looks up the pack by it | `every_corpus_project_builds_as_ts_dash_builds_it` (`rewrite-then-contents`) |
 | Every build in a session appends the whole pack to the list again | the list is filled in `transformPath` and never emptied, and plugins live from setup to setup | `every_build_in_a_session_appends_the_whole_pack_again` |
 | A `.ts` file swc refuses is written to its `.js` path as the TypeScript source | the `load` hook throws, the host catches it, the data stays the source text, and `finalizeBuild` returns any string (`TypeScript.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`typescript`) |
+| A generator script that throws, does not compile, imports a module that cannot be found, or has a falsy default export writes its own source to its output path | `load` returns `null`, the chain's `?? file.data` keeps the source `read` returned, and `finalizeBuild` writes any string (`GeneratorScripts/Plugin.ts`, `LoadFiles.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
+| An `import` that names a module with its `.js` or `.ts` extension is not found | js-runtime appends `.ts`, then `.js`, to every name it looks up (`Runtime.ts` `require`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
+| Templates read with `useTemplate` are written to the output too, `omitTemplate` or not | `currentTemplates` is never filled, so templates are neither unlinked nor required, and `omitUsedTemplates` is only read in `ignore`, which ran for every file before the first script (`GeneratorScripts/Plugin.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
+| A script whose default export is a function writes nothing, and its metadata still lists the path as generated | `finalizeBuild` returns the function, `JSON.stringify` gives `undefined`, and the failed write is not reported | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
+| A typed array a script exports is written as JSON with index keys, `{"0":123,"1":125}`, not as bytes | `finalizeBuild` stringifies every object | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
+| Scripts share each module by path, and a module keeps the variables of the script that evaluated it: `useTemplate` resolves against the folder of the first script that imported `@bridge/generate`, except in scripts that started importing it before that one finished | the loader caches a module once its code has run, with the `env` it ran with (`Runtime.ts` `eval`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`, whose scripts in different folders all start together and each get their own copy) |
 | A `~/.dash/.timestamp` that is not a number keeps the cache forever | `parseInt` gives NaN, and `now - NaN > day` is false (`LocalCache.ts`) | `a_timestamp_that_is_not_a_number_never_expires` |
 | A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 

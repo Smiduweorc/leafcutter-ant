@@ -1,0 +1,6 @@
+{
+	"https": {
+		"https://example.com/lib/colors.js": "export const colors = ['red', 'green']\nexport default (name) => `remote:${name}`\n",
+		"https://example.com/lib/typed.ts": "const answer: number = 42\nexport default answer\n"
+	}
+}

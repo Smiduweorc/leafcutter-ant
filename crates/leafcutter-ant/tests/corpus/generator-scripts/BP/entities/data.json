@@ -1,0 +1,2 @@
+// json5 is fine here
+{ speed: 0.25, tags: ['a', 'b',], }

@@ -16,10 +16,6 @@ pub(crate) enum BuiltIn {
 	Plugin(Box<dyn Plugin>),
 	/// A built-in plugin that runs user JavaScript, which runs in the engine
 	/// as the factory the layer exports under this name.
-	#[expect(
-		dead_code,
-		reason = "generatorScripts and customCommands switch it on as each is checked against TS Dash"
-	)]
 	JavaScript(&'static str),
 	Unknown,
 }
@@ -40,9 +36,9 @@ pub(crate) fn status(id: &str) -> Status {
 		| "formatVersionCorrection"
 		| "rewriteForPackaging"
 		| "typeScript"
-		| "simpleRewrite" => Status::Ported,
+		| "simpleRewrite"
+		| "generatorScripts" => Status::Ported,
 		"customCommands"
-		| "generatorScripts"
 		| "moLang"
 		| "molang"
 		| "customEntityComponents"
@@ -72,6 +68,7 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 		"simpleRewrite" => {
 			BuiltIn::Plugin(Box::new(simple_rewrite::SimpleRewrite::new(cx, options)))
 		}
+		"generatorScripts" => BuiltIn::JavaScript("GeneratorScriptsPlugin"),
 		_ => BuiltIn::Unknown,
 	}
 }

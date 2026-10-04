@@ -1,0 +1,5 @@
+{
+	"format_version": 2,
+	"header": { "name": "generators", "uuid": "8f6c1a52-3a7e-4f53-9a43-d3c5a2b1e001", "version": [1, 0, 0] },
+	"modules": [{ "type": "data", "uuid": "8f6c1a52-3a7e-4f53-9a43-d3c5a2b1e002", "version": [1, 0, 0] }]
+}
