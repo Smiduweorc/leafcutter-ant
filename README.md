@@ -14,9 +14,9 @@ questions are in `PRD-native-dash-compiler.md` next to this repository.
 
 It builds projects whose plugins are the built-ins `simpleRewrite`,
 `rewriteForPackaging`, `entityIdentifierAlias`, `formatVersionCorrection`,
-`floatPropertyTruncationFix`, `contentsFile`, `typeScript` and
-`generatorScripts`, and compiler plugins from extensions; scripts run in an
-embedded JavaScript engine (QuickJS). The built-ins that still need porting (`moLang` and the custom
+`floatPropertyTruncationFix`, `contentsFile`, `typeScript`,
+`generatorScripts` and `customCommands`, and compiler plugins from
+extensions; scripts run in an embedded JavaScript engine (QuickJS). The built-ins that still need porting (`moLang` and the custom
 components) get an error on the console when a plugin list names them, and
 the build goes on without them. Hot updates and `watch` come after that.
 
@@ -215,6 +215,9 @@ separate branch, and this table is that branch's checklist.
 | A script whose default export is a function writes nothing, and its metadata still lists the path as generated | `finalizeBuild` returns the function, `JSON.stringify` gives `undefined`, and the failed write is not reported | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
 | A typed array a script exports is written as JSON with index keys, `{"0":123,"1":125}`, not as bytes | `finalizeBuild` stringifies every object | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`) |
 | Scripts share each module by path, and a module keeps the variables of the script that evaluated it: `useTemplate` resolves against the folder of the first script that imported `@bridge/generate`, except in scripts that started importing it before that one finished | the loader caches a module once its code has run, with the `env` it ran with (`Runtime.ts` `eval`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`generator-scripts`, whose scripts in different folders all start together and each get their own copy) |
+| Custom commands written in TypeScript are never loaded, so their names stay in the output as they were written | `read` returns a command file's text only when its path ends in `.js` (`Commands/Plugin.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`custom-commands`) |
+| A command location whose last segment is a `*{regex}` key finds nothing | `setObjectAt` treats only a plain `*` specially in the last segment and reads any other as a literal key (common-utils `setObjectAt`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`custom-commands`) |
+| A command template that returns neither a string nor an array leaves a `# Failed to process command ...` line in `.mcfunction` output; command lists in JSON drop it | `process` turns the error into a comment, and only `.mcfunction` files keep comments (`Commands/Command.ts`, `transformCommands.ts`) | `every_corpus_project_builds_as_ts_dash_builds_it` (`custom-commands`) |
 | A `~/.dash/.timestamp` that is not a number keeps the cache forever | `parseInt` gives NaN, and `now - NaN > day` is false (`LocalCache.ts`) | `a_timestamp_that_is_not_a_number_never_expires` |
 | A required file that does not exist is skipped without a message | `resolveSingle` reports an undefined dependency only for an entry `query` never returns (`ResolveFileOrder.ts`) | `the_cache_file_lists_every_file_with_aliases_requirements_and_update_files` |
 

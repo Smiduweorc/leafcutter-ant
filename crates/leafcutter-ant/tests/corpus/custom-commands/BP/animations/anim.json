@@ -1,0 +1,6 @@
+{
+	"format_version": "1.10.0",
+	"animations": {
+		"animation.test": { "timeline": { "0.0": ["/greet anim", "/boom"], "1.0": "/text one" } }
+	}
+}

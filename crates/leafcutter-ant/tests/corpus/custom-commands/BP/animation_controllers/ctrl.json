@@ -1,0 +1,10 @@
+{
+	"format_version": "1.10.0",
+	"animation_controllers": {
+		"controller.animation.test": {
+			"states": {
+				"default": { "on_entry": ["/greet ctrl", "@s jump"], "on_exit": ["/legacy"] }
+			}
+		}
+	}
+}

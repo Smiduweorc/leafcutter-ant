@@ -1,0 +1,13 @@
+{
+	"format_version": "1.16.0",
+	"minecraft:entity": {
+		"description": { "identifier": "custom:zombie" },
+		"events": {
+			"a": { "run_command": { "command": ["greet zombie", "/say slashed", { "bad": true }, 5] } },
+			"b": { "run_command": { "command": "boom" } },
+			"c": { "sequence": [{ "run_command": { "command": ["text x"] } }] },
+			"d": { "run_command": { "command": [] } },
+			"e": { "run_command": { "target": "self" } }
+		}
+	}
+}

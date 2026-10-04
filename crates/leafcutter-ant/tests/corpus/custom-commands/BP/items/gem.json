@@ -1,0 +1,7 @@
+{
+	"format_version": "1.16.100",
+	"minecraft:item": {
+		"description": { "identifier": "custom:gem", "tags": ["greet tag"] },
+		"events": { "use": { "run_command": { "command": ["greet item"] } } }
+	}
+}

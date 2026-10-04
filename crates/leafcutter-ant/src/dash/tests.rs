@@ -326,7 +326,6 @@ fn plugin_list_entries_name_builtins_extensions_and_unknown_plugins() {
 			"error: Unknown compiler plugin: nope",
 			"error: The built-in plugin moLang is not ported to leafcutter-ant yet",
 			"error: Unknown compiler plugin: 5",
-			"error: The built-in plugin customCommands is not ported to leafcutter-ant yet",
 			// `plugins.constructor` is Object, which the loader takes for a
 			// path.
 			"error: Failed to execute plugin constructor: TypeError: Path must be a string. Received undefined",

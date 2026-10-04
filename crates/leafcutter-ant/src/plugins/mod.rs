@@ -37,9 +37,9 @@ pub(crate) fn status(id: &str) -> Status {
 		| "rewriteForPackaging"
 		| "typeScript"
 		| "simpleRewrite"
-		| "generatorScripts" => Status::Ported,
-		"customCommands"
-		| "moLang"
+		| "generatorScripts"
+		| "customCommands" => Status::Ported,
+		"moLang"
 		| "molang"
 		| "customEntityComponents"
 		| "customItemComponents"
@@ -69,6 +69,7 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 			BuiltIn::Plugin(Box::new(simple_rewrite::SimpleRewrite::new(cx, options)))
 		}
 		"generatorScripts" => BuiltIn::JavaScript("GeneratorScriptsPlugin"),
+		"customCommands" => BuiltIn::JavaScript("CustomCommandsPlugin"),
 		_ => BuiltIn::Unknown,
 	}
 }

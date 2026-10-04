@@ -1,0 +1,11 @@
+{
+	"packs": {
+		"behaviorPack": "./BP"
+	},
+	"compiler": {
+		"plugins": [
+			["customCommands", { "include": { "item": ["minecraft:item/events/*/run_command/command", "minecraft:item/description/*{^tags$}"] }, "v1CompatMode": true }],
+			"simpleRewrite"
+		]
+	}
+}
