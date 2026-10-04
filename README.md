@@ -99,12 +99,14 @@ compiler. The engine is a runtime with no walls of its own: a script can do
 anything its JavaScript can reach, so what it can reach is kept to this list.
 
 - **Globals**: ECMAScript's own (`Object`, `JSON`, `Promise`, `Map`,
-  `RegExp`, typed arrays and the rest), plus `console` (`log`, `info`,
-  `warn`, `error`, `time`, `timeEnd`, all going to the host's `Console`),
-  and `Blob` and `File` (`text`, `arrayBuffer`, `bytes`, `slice`, `size`,
-  `type`, `name`, `lastModified`). There is no `fetch`, no timers, no
-  `process`, `Deno` or `require`, and no file or network access of the
-  engine's own.
+  `RegExp`, typed arrays and the rest); the few web globals QuickJS adds
+  (`performance`, `queueMicrotask`, `atob`, `btoa`, `DOMException`);
+  `console` (`log`, `info`, `warn`, `error`, `time`, `timeEnd`, all going to
+  the host's `Console`); and `Blob` and `File` (`text`, `arrayBuffer`,
+  `bytes`, `slice`, `size`, `type`, `name`, `lastModified`). There is no
+  `fetch`, no timers, no `process`, `Deno` or `require`, and no file or
+  network access of the engine's own. A test pins this list
+  (`scripts_see_exactly_the_globals_the_readme_lists`).
 - **Modules**, resolved as js-runtime 0.4.5 resolves them: the modules Dash
   registers (`@bridge/compiler` with the build `mode`; `@bridge/generate`,
   `pathe` and `path-browserify` while generator scripts run), relative paths

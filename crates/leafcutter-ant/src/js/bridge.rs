@@ -402,4 +402,28 @@ mod tests {
 		});
 		assert_eq!(text, stringify(&json(source), Indent::None));
 	}
+
+	#[test]
+	fn scripts_see_exactly_the_globals_the_readme_lists() {
+		// README "What scripts may touch": ECMAScript's globals, the few web
+		// ones QuickJS adds, and the layer's console, Blob and File. A new
+		// global from an engine update fails here until the README says so.
+		let (dash, _) = dash_with(MemoryFs::with(&[]), "[]");
+		let names: String = dash.compiler().cx.engine.with(|ctx, _| {
+			ctx.eval("Object.getOwnPropertyNames(globalThis).sort().join(' ')")
+				.expect("runs")
+		});
+		assert_eq!(
+			names,
+			"AggregateError Array ArrayBuffer AsyncDisposableStack Atomics BigInt BigInt64Array \
+			 BigUint64Array Blob Boolean DOMException DataView Date DisposableStack Error EvalError \
+			 File FinalizationRegistry Float16Array Float32Array Float64Array Function Infinity \
+			 Int16Array Int32Array Int8Array InternalError Iterator JSON Map Math NaN Number Object \
+			 Promise Proxy RangeError ReferenceError Reflect RegExp Set SharedArrayBuffer String \
+			 SuppressedError Symbol SyntaxError TypeError URIError Uint16Array Uint32Array Uint8Array \
+			 Uint8ClampedArray WeakMap WeakRef WeakSet atob btoa console decodeURI \
+			 decodeURIComponent encodeURI encodeURIComponent escape eval globalThis isFinite isNaN \
+			 parseFloat parseInt performance queueMicrotask undefined unescape"
+		);
+	}
 }
