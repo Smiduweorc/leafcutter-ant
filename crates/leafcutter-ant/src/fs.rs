@@ -354,7 +354,7 @@ mod tests {
 	fn directories_are_listed_sorted_by_name_with_their_kind() {
 		let scratch = Scratch::new("readdir");
 		let fs = scratch.fs();
-		for path in ["b.json", "a/x", "B.json", "\u{e9}.json", "_"] {
+		for path in ["b.json", "a/x", "C.json", "\u{e9}.json", "_"] {
 			block_on(fs.write_file(path, b"")).expect("written");
 		}
 		let entries = block_on(fs.readdir("")).expect("listed");
@@ -363,7 +363,7 @@ mod tests {
 		assert_eq!(
 			listed,
 			[
-				("B.json", EntryKind::File),
+				("C.json", EntryKind::File),
 				("_", EntryKind::File),
 				("a", EntryKind::Directory),
 				("b.json", EntryKind::File),
