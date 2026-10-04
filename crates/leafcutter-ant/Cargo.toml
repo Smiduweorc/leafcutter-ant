@@ -29,7 +29,7 @@ ryu-js = "1.0.3"
 # serde_json 1.0.115, indexmap 2.5.0 and semver 1.0.21. Do not let
 # `cargo update` move them.
 swc = "=0.278.1"
-swc_common = "0.34"
+swc_common = "14.0"
 # The syntax tree js-runtime's import/export rewrite walks, and the parser
 # options that pick JavaScript or TypeScript; the versions swc 0.278.1
 # locks. anyhow is the error type swc's handler API is written in.
