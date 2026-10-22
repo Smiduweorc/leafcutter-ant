@@ -44,7 +44,7 @@ fn source_file(cm: &SourceMap, filename: &str, source: &str) -> Arc<SourceFile> 
 	} else {
 		FileName::Real(filename.into())
 	};
-	cm.new_source_file(name, source.to_owned())
+	cm.new_source_file(Arc::new(name), source.to_owned())
 }
 
 /// `transformSync(source, options).code`. `options` is the JSON the caller
@@ -73,7 +73,7 @@ pub(crate) fn minify(source: &str, options: serde_json::Value) -> Result<String,
 	with_compiler(|compiler, cm, handler| {
 		let file = source_file(cm, "", source);
 		compiler
-			.minify(file, handler, &options)
+			.minify(file, handler, &options, swc::JsMinifyExtras::default())
 			.map(|output| output.code)
 	})
 }

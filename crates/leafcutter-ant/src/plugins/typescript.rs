@@ -147,9 +147,10 @@ mod tests {
 	use super::*;
 
 	/// typescript.json, recorded by tools/parity/typescript.mjs from
-	/// @swc/wasm-web 1.6.5 with the plugin's options.
+	/// @swc/wasm-web 1.6.5 with the plugin's options, except where
+	/// tests/swc-80.json records how swc 80 prints the file instead.
 	#[test]
-	fn the_output_matches_swc_wasm_web_1_6_5() {
+	fn the_output_matches_swc_wasm_web_1_6_5_or_the_swc_80_record() {
 		let vectors = crate::testing::vectors("typescript.json");
 		let vectors = vectors.as_array().expect("an array");
 		assert!(vectors.len() >= 40);
@@ -161,10 +162,12 @@ mod tests {
 			);
 			let inline = vector[2].as_bool().expect("a flag");
 			let actual = transform(source, name, inline).ok();
-			if actual.as_deref() != vector[3].as_str() {
+			let expected =
+				crate::testing::swc_80("typescript.json", &format!("{name} inline={inline}"))
+					.unwrap_or_else(|| vector[3].clone());
+			if actual.as_deref() != expected.as_str() {
 				failures.push(format!(
-					"{name} inline={inline}:\n  expected {}\n  got      {actual:?}",
-					vector[3]
+					"{name} inline={inline}:\n  expected {expected}\n  got      {actual:?}"
 				));
 			}
 		}

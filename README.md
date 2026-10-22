@@ -22,9 +22,7 @@ the build goes on without them. Hot updates and `watch` come after that.
 
 The library's runtime dependencies are `indexmap`, `ryu-js`, `regress`,
 `futures-util`, `swc`, `swc_common`, `serde_json` and `rquickjs`, each with
-its reason in `Cargo.toml`, and it does nothing until it is called. `Cargo.lock` holds swc
-and the crates around it at the versions swc 1.6.5 was released with; do not
-let `cargo update` move them.
+its reason in `Cargo.toml`, and it does nothing until it is called.
 
 ## leafcutter-ant is not for you if you
 
@@ -229,6 +227,7 @@ Where leafcutter-ant differs from TS Dash, and why:
 | --- | --- | --- | --- |
 | A `\u` escape that leaves a lone surrogate, or a config whose `packs` is a string split between the halves of a surrogate pair | keeps it, writes `"\udXXX"` | U+FFFD | Rust strings cannot hold a lone surrogate |
 | Tab-indented output nested more than about 4,000 deep | V8 throws `RangeError` | writes it | the writer does not recurse |
+| TypeScript and script output | @swc/wasm-web 1.6.5 | swc 80 (the `swc` crate), with its helpers inlined as 1.6.5 inlined them | a current compiler instead of one pinned to a 2024 release and the old serde, serde_json and indexmap it needed. Enums and namespaces are printed differently (`var E = function(E) {...; return E}(E \|\| {})`, the `var` after the namespace), helpers are smaller, and an empty `export { }` is dropped; `tests/swc-80.json` holds every vector and corpus file where this changes the output, and the tests compare against it there |
 | The console lines of `floatPropertyTruncationFix` and the parse errors of `formatVersionCorrection` | go to the global `console` | go to the host's `Console` | a library does not print |
 | `leafcutter build` start-up | checks GitHub for a newer release and downloads the swc WebAssembly module | neither | the release check is a network call nobody asked for, and swc is compiled in |
 | Cached definitions in `~/.dash` | read with `JSON.parse` | read with the json5 reader | the cache is written by the tool itself as plain JSON, which both read alike |

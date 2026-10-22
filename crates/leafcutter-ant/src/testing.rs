@@ -177,6 +177,16 @@ pub(crate) fn vectors(name: &str) -> serde_json::Value {
 	serde_json::from_str(&text).unwrap_or_else(|e| panic!("{path}: {e}"))
 }
 
+/// What `key` of the vector file `name` expects instead, where swc 80 prints
+/// a file differently from @swc/wasm-web 1.6.5 (tests/swc-80.json).
+pub(crate) fn swc_80(name: &str, key: &str) -> Option<serde_json::Value> {
+	let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/swc-80.json");
+	let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{path}: {e}"));
+	let all: serde_json::Value =
+		serde_json::from_str(&text).unwrap_or_else(|e| panic!("{path}: {e}"));
+	all[name].get(key).cloned()
+}
+
 /// The recorded answers of one plugin in plugins.json.
 pub(crate) fn plugin_vectors(plugin: &str) -> Vec<serde_json::Value> {
 	vectors("plugins.json")

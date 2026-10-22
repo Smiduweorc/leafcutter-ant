@@ -20,6 +20,8 @@
 //! - `import d, * as ns from ...` binds `d` and leaves `ns` undeclared.
 //! - A module with no statements throws, as `body[0].span` does.
 
+use std::borrow::Cow;
+
 use swc_common::Spanned;
 use swc_ecma_ast::{
 	Decl, DefaultDecl, EsVersion, ImportSpecifier, ModuleDecl, ModuleExportName, ModuleItem, Pat,
@@ -176,7 +178,7 @@ fn plan(body: &[ModuleItem]) -> Result<(u32, Vec<Edit>, String), String> {
 						);
 					};
 					let orig = export_name(&named.orig);
-					match export_name(exported) {
+					match &*export_name(exported) {
 						"default" => text.push_str(&format!("\n___module.__default__ = {orig};")),
 						name => text.push_str(&format!("\n___module.{name} = {orig};")),
 					}
@@ -203,7 +205,7 @@ fn plan(body: &[ModuleItem]) -> Result<(u32, Vec<Edit>, String), String> {
 								ImportSpecifier::Named(named) => {
 									let imported = match &named.imported {
 										Some(imported) => export_name(imported),
-										None => &named.local.sym,
+										None => Cow::Borrowed(&*named.local.sym),
 									};
 									imports.push(format!("{imported}: {}", named.local.sym));
 								}
@@ -232,11 +234,12 @@ fn plan(body: &[ModuleItem]) -> Result<(u32, Vec<Edit>, String), String> {
 	Ok((offset, edits, append))
 }
 
-/// `.value` of an identifier or a string literal.
-fn export_name(name: &ModuleExportName) -> &str {
+/// `.value` of an identifier or a string literal. A lone surrogate in a
+/// string literal becomes U+FFFD.
+fn export_name(name: &ModuleExportName) -> Cow<'_, str> {
 	match name {
-		ModuleExportName::Ident(ident) => &ident.sym,
-		ModuleExportName::Str(string) => &string.value,
+		ModuleExportName::Ident(ident) => Cow::Borrowed(&ident.sym),
+		ModuleExportName::Str(string) => string.value.as_wtf8().to_string_lossy(),
 	}
 }
 
@@ -268,7 +271,8 @@ mod tests {
 	use super::*;
 
 	/// runtime.json, recorded by tools/parity/runtime.mjs from js-runtime
-	/// 0.4.5's `transformSource` on @swc/wasm-web 1.6.5.
+	/// 0.4.5's `transformSource` on @swc/wasm-web 1.6.5, except where
+	/// tests/swc-80.json records how swc 80 prints the module instead.
 	#[test]
 	fn modules_are_rewritten_as_js_runtime_rewrites_them() {
 		let vectors = crate::testing::vectors("runtime.json");
@@ -280,10 +284,11 @@ mod tests {
 			let source = vector[1].as_str().expect("a source");
 			let basename = path.rsplit('/').next().unwrap_or(path);
 			let actual = transform_source(path, basename, source).ok();
-			if actual.as_deref() != vector[2].as_str() {
+			let expected =
+				crate::testing::swc_80("runtime.json", path).unwrap_or_else(|| vector[2].clone());
+			if actual.as_deref() != expected.as_str() {
 				failures.push(format!(
-					"{path}:\n  expected {}\n  got      {actual:?}",
-					vector[2]
+					"{path}:\n  expected {expected}\n  got      {actual:?}"
 				));
 			}
 		}

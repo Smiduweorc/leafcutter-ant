@@ -14,31 +14,30 @@ futures-util = { version = "0.3", default-features = false, features = ["alloc"]
 # ECMAScript regular expressions, to run the regex sources picomatch builds
 # with the semantics V8 gives them; utf16 matches over UTF-16 code units, as
 # RegExp#exec does outside unicode mode.
-regress = { version = "0.12.0", features = ["utf16"] }
+regress = { version = "0.12", features = ["utf16"] }
 # Keeps object keys in insertion order with O(1) lookup; JavaScript property
-# order is built on top of it in src/json/mod.rs. The floor is 2.5 because swc
-# 0.278.1 needs indexmap 2.5.0 locked (see swc below).
-indexmap = "2.5"
+# order is built on top of it in src/json/mod.rs.
+indexmap = "2.14"
 # Number#toString exactly as ECMAScript specifies it, from the Boa engine.
 ryu-js = "1.0.3"
-# The TypeScript compiler of the typeScript plugin. 0.278.1 is the swc crate
-# @swc/wasm-web 1.6.5 is built from, so the output matches TS Dash byte for
-# byte. Cargo.lock pins every swc_* crate to the version in swc's own v1.6.5
-# lockfile, and the crates swc_common 0.34 needs at old versions: serde and
-# serde_derive 1.0.219 (1.0.220 removed the serde::__private module it uses),
-# serde_json 1.0.115, indexmap 2.5.0 and semver 1.0.21. Do not let
-# `cargo update` move them.
-swc = "=0.278.1"
-swc_common = "0.34"
+# The TypeScript compiler of the typeScript plugin. TS Dash runs
+# @swc/wasm-web 1.6.5; this is a current swc, which prints some files
+# differently (enums, namespaces, class helpers). tests/swc-80.json records
+# each of those outputs, and the README lists the difference.
+swc = "80"
+swc_common = "26"
+# Without inline-helpers swc imports its helpers from @swc/helpers, which no
+# host provides; @swc/wasm-web 1.6.5 wrote them into the output.
+swc_ecma_transforms_base = { version = "50", features = ["inline-helpers"] }
 # The syntax tree js-runtime's import/export rewrite walks, and the parser
-# options that pick JavaScript or TypeScript; the versions swc 0.278.1
-# locks. anyhow is the error type swc's handler API is written in.
-swc_ecma_ast = "0.115"
-swc_ecma_parser = "0.146"
+# options that pick JavaScript or TypeScript, at the versions swc depends
+# on. anyhow is the error type swc's handler API is written in.
+swc_ecma_ast = "29"
+swc_ecma_parser = "46"
 anyhow = "1"
 # swc's options are built from the same JSON the plugin hands @swc/wasm-web;
 # swc depends on serde_json already.
-serde_json = "1.0.115"
+serde_json = "1.0.154"
 # QuickJS, the engine user scripts and extension plugins run in: generator
 # scripts, custom commands and compiler plugins from extensions are
 # JavaScript modules. It builds to WebAssembly and embeds without a V8
@@ -54,8 +53,7 @@ rquickjs = "0.14.0"
 futures-executor = "0.3"
 # Reads the golden vectors. preserve_order keeps keys in source order and
 # float_roundtrip parses numbers correctly rounded, as JSON.parse does.
-# 1.0.115 is the version swc needs locked.
-serde_json = { version = "1.0.115", features = ["preserve_order", "float_roundtrip"] }
+serde_json = { version = "1.0.154", features = ["preserve_order", "float_roundtrip"] }
 
 [lints]
 workspace = true
