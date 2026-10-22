@@ -34,7 +34,7 @@ fn definitions(name: &str) -> leafcutter_ant::json::Value {
 	parse_json5(&text).expect("definitions are JSON")
 }
 
-/// The data the custom commands plugin asks for, vendored from the
+/// The data the custom commands and Molang plugins ask for, vendored from the
 /// editor-packages commit the definitions come from; corpus.mjs answers the
 /// same way.
 fn request_json_data(
@@ -43,6 +43,9 @@ fn request_json_data(
 	let result = match path {
 		"data/packages/minecraftBedrock/location/validCommand.json" => {
 			Ok(definitions("validCommand.json"))
+		}
+		"data/packages/minecraftBedrock/location/validMolang.json" => {
+			Ok(definitions("validMolang.json"))
 		}
 		other => Err(format!("Error: no data at {other}")),
 	};

@@ -1,0 +1,7 @@
+{
+	"minecraft:entity": {
+		"components": {
+			"demo:glow": {}
+		}
+	}
+}

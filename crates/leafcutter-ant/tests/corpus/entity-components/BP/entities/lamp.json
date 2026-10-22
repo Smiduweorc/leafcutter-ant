@@ -1,0 +1,41 @@
+{
+	"format_version": "1.16.0",
+	"minecraft:entity": {
+		"description": {
+			"identifier": "demo:lamp"
+		},
+		"components": {
+			"demo:glow": 3,
+			"minecraft:health": {
+				"value": 10
+			},
+			"tag:x": {},
+			"demo:merge": {
+				"a": 1,
+				"b": 2
+			},
+			"demo:missing": {}
+		},
+		"component_groups": {
+			"lit": {
+				"demo:glow": 5,
+				"demo:throws": {}
+			}
+		},
+		"permutations": [
+			{
+				"condition": "q.is_baby",
+				"components": {
+					"demo:merge": {
+						"a": "x",
+						"b": "y"
+					}
+				}
+			},
+			{
+				"condition": "1"
+			}
+		],
+		"events": {}
+	}
+}

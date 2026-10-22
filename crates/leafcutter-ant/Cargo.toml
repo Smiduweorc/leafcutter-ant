@@ -18,6 +18,9 @@ regress = { version = "0.12", features = ["utf16"] }
 # Keeps object keys in insertion order with O(1) lookup; JavaScript property
 # order is built on top of it in src/json/mod.rs.
 indexmap = "2.14"
+# SHA-1 for common-utils' hashString, which names the files and events the
+# custom components generate.
+sha1_smol = "1"
 # Number#toString exactly as ECMAScript specifies it, from the Boa engine.
 ryu-js = "1.0.3"
 # The TypeScript compiler of the typeScript plugin. TS Dash runs

@@ -1,0 +1,14 @@
+{
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP"
+	},
+	"compiler": {
+		"plugins": [
+			"customItemComponents",
+			"customEntityComponents",
+			"simpleRewrite"
+		]
+	},
+	"namespace": "studio"
+}

@@ -1,0 +1,16 @@
+{
+	"format_version": "1.16.100",
+	"minecraft:item": {
+		"description": {
+			"identifier": "demo:wand"
+		},
+		"components": {
+			"demo:fire": {
+				"seconds": 9
+			},
+			"minecraft:icon": {
+				"texture": "wand"
+			}
+		}
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"format_version": "1.16.100",
+	"minecraft:item": {
+		"description": {
+			"identifier": "demo:rod"
+		},
+		"components": {
+			"demo:fire": {},
+			"demo:legacy": {
+				"x": 1
+			}
+		}
+	}
+}

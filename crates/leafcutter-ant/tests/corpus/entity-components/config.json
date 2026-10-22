@@ -1,0 +1,14 @@
+{
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP"
+	},
+	"compiler": {
+		"plugins": [
+			"customEntityComponents",
+			"simpleRewrite"
+		]
+	},
+	"namespace": "demo_pack",
+	"targetVersion": "1.19.50"
+}

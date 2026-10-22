@@ -1,0 +1,47 @@
+{
+	"format_version": "1.16.0",
+	"minecraft:entity": {
+		"description": {
+			"identifier": "demo:zombie",
+			"scripts": {
+				"animate": [
+					{
+						"walk": "f.sq(q.modified_move_speed) > 0.5"
+					},
+					{
+						"idle": "v.old * 7"
+					}
+				]
+			}
+		},
+		"permutations": [
+			{
+				"condition": "f.pow(2, 3) == 8 && q.is_baby",
+				"components": {}
+			},
+			{
+				"condition": "/raw",
+				"components": {}
+			},
+			{
+				"condition": "@also raw",
+				"components": {}
+			},
+			{
+				"condition": "f.half(4) + (",
+				"components": {}
+			},
+			{
+				"condition": 5,
+				"components": {}
+			}
+		],
+		"events": {
+			"grow": {
+				"set_actor_property": {
+					"demo:size": "f.sq(2) + q.property('demo:size')"
+				}
+			}
+		}
+	}
+}

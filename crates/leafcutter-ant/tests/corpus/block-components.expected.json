@@ -1,0 +1,57 @@
+{
+	"production": {
+		"written": {
+			"builds/dist/Bridge BP/blocks/ore.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\",\n\t\t\t\"debug\": {\n\t\t\t\t\"ns\": \"bridge\",\n\t\t\t\t\"n\": 3\n\t\t\t}\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:light_emission\": 7,\n\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\"\n\t\t},\n\t\t\"permutations\": [\n\t\t\t{\n\t\t\t\t\"condition\": \"q.block_property('demo:on')\",\n\t\t\t\t\"components\": {\n\t\t\t\t\t\"minecraft:light_emission\": 15,\n\t\t\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"condition\": \"1\"\n\t\t\t}\n\t\t]\n\t}\n}",
+			"builds/dist/Bridge BP/blocks/stone.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:stone\"\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:destroy_time\": 1\n\t\t}\n\t}\n}",
+			"builds/dist/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"builds/dist/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"builds/dist/Bridge BP/manifest.json": "{\n\t\"format_version\": 2\n}\n",
+			"builds/dist/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}",
+			"builds/dist/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"development": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/ore.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"blockComponent#demo:shiny\"\n\t\t],\n\t\t\"updateFiles\": [\n\t\t\t\"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\",\n\t\t\t\"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json\",\n\t\t\t\"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\",\n\t\t\t\"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json\"\n\t\t]\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/stone.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/components/block/shiny.js\",\n\t\t\"aliases\": [\n\t\t\t\"blockComponent#demo:shiny\"\n\t\t],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t]\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t}\n]",
+			"builds/dev/Bridge BP/blocks/ore.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\",\n\t\t\t\"debug\": {\n\t\t\t\t\"ns\": \"bridge\",\n\t\t\t\t\"n\": 3\n\t\t\t}\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:light_emission\": 7,\n\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\"\n\t\t},\n\t\t\"permutations\": [\n\t\t\t{\n\t\t\t\t\"condition\": \"q.block_property('demo:on')\",\n\t\t\t\t\"components\": {\n\t\t\t\t\t\"minecraft:light_emission\": 15,\n\t\t\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"condition\": \"1\"\n\t\t\t}\n\t\t]\n\t}\n}",
+			"builds/dev/Bridge BP/blocks/stone.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:stone\"\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:destroy_time\": 1\n\t\t}\n\t}\n}",
+			"builds/dev/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"builds/dev/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"builds/dev/Bridge BP/manifest.json": "{\n\t\"format_version\": 2\n}\n",
+			"builds/dev/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}",
+			"builds/dev/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}"
+		},
+		"removed": [],
+		"output": {}
+	},
+	"production-out": {
+		"written": {},
+		"removed": [],
+		"output": {
+			"builds/dist/Bridge BP/blocks/ore.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\",\n\t\t\t\"debug\": {\n\t\t\t\t\"ns\": \"bridge\",\n\t\t\t\t\"n\": 3\n\t\t\t}\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:light_emission\": 7,\n\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\"\n\t\t},\n\t\t\"permutations\": [\n\t\t\t{\n\t\t\t\t\"condition\": \"q.block_property('demo:on')\",\n\t\t\t\t\"components\": {\n\t\t\t\t\t\"minecraft:light_emission\": 15,\n\t\t\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"condition\": \"1\"\n\t\t\t}\n\t\t]\n\t}\n}",
+			"builds/dist/Bridge BP/blocks/stone.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:stone\"\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:destroy_time\": 1\n\t\t}\n\t}\n}",
+			"builds/dist/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"builds/dist/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"builds/dist/Bridge BP/manifest.json": "{\n\t\"format_version\": 2\n}\n",
+			"builds/dist/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}",
+			"builds/dist/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}"
+		}
+	},
+	"development-out": {
+		"written": {
+			".bridge/.dash.development.json": "[\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/ore.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"blockComponent#demo:shiny\"\n\t\t],\n\t\t\"updateFiles\": [\n\t\t\t\"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\",\n\t\t\t\"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json\",\n\t\t\t\"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\",\n\t\t\t\"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json\"\n\t\t]\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/blocks/stone.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/components/block/shiny.js\",\n\t\t\"aliases\": [\n\t\t\t\"blockComponent#demo:shiny\"\n\t\t],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t]\n\t},\n\t{\n\t\t\"isVirtual\": false,\n\t\t\"filePath\": \"BP/manifest.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t},\n\t{\n\t\t\"isVirtual\": true,\n\t\t\"filePath\": \"BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json\",\n\t\t\"aliases\": [],\n\t\t\"requiredFiles\": [\n\t\t\t\"BP/blocks/ore.json\"\n\t\t],\n\t\t\"updateFiles\": []\n\t}\n]"
+		},
+		"removed": [],
+		"output": {
+			"development_behavior_packs/Bridge BP/blocks/ore.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\",\n\t\t\t\"debug\": {\n\t\t\t\t\"ns\": \"bridge\",\n\t\t\t\t\"n\": 3\n\t\t\t}\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:light_emission\": 7,\n\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json\"\n\t\t},\n\t\t\"permutations\": [\n\t\t\t{\n\t\t\t\t\"condition\": \"q.block_property('demo:on')\",\n\t\t\t\t\"components\": {\n\t\t\t\t\t\"minecraft:light_emission\": 15,\n\t\t\t\t\t\"minecraft:loot\": \"loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"condition\": \"1\"\n\t\t\t}\n\t\t]\n\t}\n}",
+			"development_behavior_packs/Bridge BP/blocks/stone.json": "{\n\t\"format_version\": \"1.19.50\",\n\t\"minecraft:block\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:stone\"\n\t\t},\n\t\t\"components\": {\n\t\t\t\"minecraft:destroy_time\": 1\n\t\t}\n\t}\n}",
+			"development_behavior_packs/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_0.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"development_behavior_packs/Bridge BP/loot_tables/bridge/80b29b0c8c75b4bb_lt_2.json": "{\n\t\"pools\": [\n\t\t{\n\t\t\t\"rolls\": 1\n\t\t}\n\t]\n}",
+			"development_behavior_packs/Bridge BP/manifest.json": "{\n\t\"format_version\": 2\n}\n",
+			"development_behavior_packs/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_1.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}",
+			"development_behavior_packs/Bridge BP/recipes/bridge/80b29b0c8c75b4bb_recipe_3.json": "{\n\t\"minecraft:recipe_shaped\": {\n\t\t\"description\": {\n\t\t\t\"identifier\": \"demo:ore\"\n\t\t}\n\t}\n}"
+		}
+	}
+}

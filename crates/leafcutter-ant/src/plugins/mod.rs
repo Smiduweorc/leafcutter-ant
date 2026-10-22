@@ -20,32 +20,25 @@ pub(crate) enum BuiltIn {
 	Unknown,
 }
 
-/// Whether `builtInPlugins[id]` exists here.
-pub(crate) enum Status {
-	Ported,
-	/// A built-in of TS Dash that leafcutter-ant does not have yet.
-	NotPorted,
-	Unknown,
-}
-
-pub(crate) fn status(id: &str) -> Status {
-	match id {
+/// Whether `builtInPlugins[id]` exists.
+pub(crate) fn is_built_in(id: &str) -> bool {
+	matches!(
+		id,
 		"contentsFile"
-		| "entityIdentifierAlias"
-		| "floatPropertyTruncationFix"
-		| "formatVersionCorrection"
-		| "rewriteForPackaging"
-		| "typeScript"
-		| "simpleRewrite"
-		| "generatorScripts"
-		| "customCommands" => Status::Ported,
-		"moLang"
-		| "molang"
-		| "customEntityComponents"
-		| "customItemComponents"
-		| "customBlockComponents" => Status::NotPorted,
-		_ => Status::Unknown,
-	}
+			| "entityIdentifierAlias"
+			| "floatPropertyTruncationFix"
+			| "formatVersionCorrection"
+			| "rewriteForPackaging"
+			| "typeScript"
+			| "simpleRewrite"
+			| "generatorScripts"
+			| "customCommands"
+			| "moLang"
+			| "molang"
+			| "customEntityComponents"
+			| "customItemComponents"
+			| "customBlockComponents"
+	)
 }
 
 /// `builtInPlugins[id]`, created with its context and options.
@@ -70,6 +63,10 @@ pub(crate) fn create(id: &str, cx: &Context, options: Options) -> BuiltIn {
 		}
 		"generatorScripts" => BuiltIn::JavaScript("GeneratorScriptsPlugin"),
 		"customCommands" => BuiltIn::JavaScript("CustomCommandsPlugin"),
+		"moLang" | "molang" => BuiltIn::JavaScript("MolangPlugin"),
+		"customEntityComponents" => BuiltIn::JavaScript("CustomEntityComponentPlugin"),
+		"customItemComponents" => BuiltIn::JavaScript("CustomItemComponentPlugin"),
+		"customBlockComponents" => BuiltIn::JavaScript("CustomBlockComponentPlugin"),
 		_ => BuiltIn::Unknown,
 	}
 }

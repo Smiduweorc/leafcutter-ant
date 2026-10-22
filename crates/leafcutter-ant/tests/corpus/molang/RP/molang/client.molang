@@ -1,0 +1,4 @@
+function('half', 'x', {
+	t.v = a.x / 2;
+	return t.v;
+});

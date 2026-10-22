@@ -12,13 +12,13 @@ something odd that a project can observe, leafcutter-ant does the same odd
 thing and lists it in the quirk ledger below. The plan, milestones and open
 questions are in `PRD-native-dash-compiler.md` next to this repository.
 
-It builds projects whose plugins are the built-ins `simpleRewrite`,
+It builds projects with every built-in plugin of TS Dash (`simpleRewrite`,
 `rewriteForPackaging`, `entityIdentifierAlias`, `formatVersionCorrection`,
 `floatPropertyTruncationFix`, `contentsFile`, `typeScript`,
-`generatorScripts` and `customCommands`, and compiler plugins from
-extensions; scripts run in an embedded JavaScript engine (QuickJS). The built-ins that still need porting (`moLang` and the custom
-components) get an error on the console when a plugin list names them, and
-the build goes on without them. Hot updates and `watch` come after that.
+`generatorScripts`, `customCommands`, `moLang` and the custom entity, item
+and block components) and with compiler plugins from extensions; scripts run
+in an embedded JavaScript engine (QuickJS). Hot updates and `watch` come
+next.
 
 The library's runtime dependencies are `indexmap`, `ryu-js`, `regress`,
 `futures-util`, `swc`, `swc_common`, `serde_json` and `rquickjs`, each with
@@ -26,7 +26,7 @@ its reason in `Cargo.toml`, and it does nothing until it is called.
 
 ## leafcutter-ant is not for you if you
 
-- need Molang functions or custom components today, or a watch mode. Use
+- need a watch mode or hot updates today. Use
   TS Dash, through
   [deno-dash-compiler](https://github.com/bridge-core/deno-dash-compiler) or
   the bridge. editor.
@@ -250,7 +250,6 @@ Where leafcutter-ant differs from TS Dash, and why:
 | A script's object that a Rust built-in changes in place (`formatVersionCorrection`'s `transform`) | the built-in changes the script's object, which a script that kept it sees | the built-in replaces it with a JSON copy it changes | the built-ins work on JSON |
 | `getFileMetadata(path).set(key, value)` | keeps `value` itself | keeps what `JSON.stringify` makes of it; `undefined` removes the key | the cache file stores metadata as JSON anyway |
 | A non-string alias, required file or path a hook returns | kept as it is, and written to the cache file as JSON | aliases are kept as JSON values; required files and paths go through `String(value)` | the file model holds strings |
-| The modules `@molang/expressions`, `@molang/core` and `molang` | registered in Dash's script runtime | missing until the Molang port (M3) | not ported yet |
 | `projectConfig`, `fileType` and `packType` in the plugin context | mc-project-core's objects | the same classes for `projectConfig` (`get`, `resolvePackPath`, `getRelativePackRoot`, `getAbsolutePackRoot`, `getAvailablePacks`, `getAvailablePackPaths`) and `packType` (`all`, `get`, `getId`, `getFromId`, `addExtensionPackType`); `fileType` has `all`, `get`, `getId`, `getIds` and `isJsonFile`, with detection run by the compiler's own port | Dash never calls the rest; `fileType` shares the compiler's cache so scripts and built-ins see one detection |
 | `File` and `Blob` | the host's (Deno's, a browser's) | a shim with `text`, `arrayBuffer`, `bytes`, `slice`, `size`, `type`, `name` and `lastModified`, and no `stream` | the engine has no web APIs |
 | pathe's `resolve` and `relative` on a path that climbs above the working directory | resolved against `process.cwd()` in the Deno CLI and against `/` in the editor | resolved against `/` | the result then depends on no process state; relative paths that stay below the working directory give the same answer either way |

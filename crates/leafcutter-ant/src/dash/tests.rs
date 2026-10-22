@@ -324,7 +324,6 @@ fn plugin_list_entries_name_builtins_extensions_and_unknown_plugins() {
 		*recorder.0.borrow(),
 		[
 			"error: Unknown compiler plugin: nope",
-			"error: The built-in plugin moLang is not ported to leafcutter-ant yet",
 			"error: Unknown compiler plugin: 5",
 			// `plugins.constructor` is Object, which the loader takes for a
 			// path.

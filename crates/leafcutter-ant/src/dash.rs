@@ -338,21 +338,14 @@ impl Compiler {
 			kinds.push(if js::plugin::is_extension(&self.cx, id) {
 				Kind::Extension
 			} else {
-				match plugins::status(id) {
-					plugins::Status::Unknown => {
-						self.cx
-							.logger
-							.console()
-							.error(&format!("Unknown compiler plugin: {id}"));
-						Kind::Skip
-					}
-					plugins::Status::NotPorted => {
-						self.cx.logger.console().error(&format!(
-							"The built-in plugin {id} is not ported to leafcutter-ant yet"
-						));
-						Kind::Skip
-					}
-					plugins::Status::Ported => Kind::BuiltIn,
+				if plugins::is_built_in(id) {
+					Kind::BuiltIn
+				} else {
+					self.cx
+						.logger
+						.console()
+						.error(&format!("Unknown compiler plugin: {id}"));
+					Kind::Skip
 				}
 			});
 		}

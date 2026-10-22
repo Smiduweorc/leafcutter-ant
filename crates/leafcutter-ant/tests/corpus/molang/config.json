@@ -1,0 +1,22 @@
+{
+	"packs": {
+		"behaviorPack": "./BP",
+		"resourcePack": "./RP"
+	},
+	"compiler": {
+		"plugins": [
+			[
+				"moLang",
+				{
+					"include": {
+						"item": [
+							"minecraft:item/components/minecraft:custom/value"
+						]
+					}
+				}
+			],
+			"simpleRewrite"
+		]
+	},
+	"namespace": "demo_pack"
+}

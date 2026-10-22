@@ -1,0 +1,7 @@
+function('sq', 'base', {
+	return math.pow(a.base, 2);
+});
+
+function('pow', 'base', 'exp', {
+	return a.exp == 0 ? 1 : a.base * f.pow(a.base, a.exp - 1);
+});

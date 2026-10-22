@@ -165,6 +165,7 @@ const PATH_BROWSERIFY: &str = include_str!("layer/path-browserify.js");
 const PATHE: &str = include_str!("layer/pathe.js");
 const RUNTIME: &str = include_str!("layer/runtime.js");
 const DASH: &str = include_str!("layer/dash.js");
+const MOLANG: &str = include_str!("layer/molang.js");
 
 impl Engine {
 	pub(crate) fn new(host: Host, limit: ScriptTimeLimit) -> Result<Engine, String> {
@@ -189,8 +190,9 @@ impl Engine {
 			let layer: Object =
 				setup.call((host_object.clone(), path_browserify, pathe.clone()))?;
 			*queue.layer.borrow_mut() = Some(Persistent::save(&ctx, layer.clone()));
+			let molang: JsValue = ctx.eval(MOLANG)?;
 			let dash_setup: Function = ctx.eval(DASH)?;
-			let dash: Object = dash_setup.call((host_object, layer.clone(), pathe))?;
+			let dash: Object = dash_setup.call((host_object, layer.clone(), pathe, molang))?;
 			layer.set("dash", dash)?;
 			Ok(Persistent::save(&ctx, layer))
 		});
@@ -542,6 +544,13 @@ fn host_functions<'js>(
 		"decode",
 		Function::new(ctx.clone(), |bytes: String| {
 			fs::text(&bridge::latin1(&bytes))
+		})?,
+	)?;
+	object.set(
+		"sha1",
+		Function::new(ctx.clone(), |ctx: Ctx<'js>, text: String| {
+			let digest = sha1_smol::Sha1::from(text.as_bytes()).digest();
+			TypedArray::<u8>::new(ctx, digest.bytes().to_vec())
 		})?,
 	)?;
 	object.set(

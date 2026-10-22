@@ -1,0 +1,29 @@
+{
+	"format_version": "1.10.0",
+	"animation_controllers": {
+		"controller.animation.demo.walk": {
+			"states": {
+				"default": {
+					"transitions": [
+						{
+							"moving": "f.sq(q.ground_speed) > 0.1"
+						}
+					],
+					"on_entry": [
+						"v.x = f.half(10);"
+					]
+				},
+				"moving": {
+					"transitions": [
+						{
+							"default": "!q.is_moving"
+						}
+					],
+					"on_exit": [
+						"v.y = 7;"
+					]
+				}
+			}
+		}
+	}
+}

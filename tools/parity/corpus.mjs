@@ -55,11 +55,13 @@ const variants = [
 	["development-out", "development", true],
 ]
 
-// The data the custom commands plugin asks for, vendored from the
+// The data the custom commands and Molang plugins ask for, vendored from the
 // editor-packages commit the definitions come from.
 const validCommand = readFileSync(new URL("../../crates/leafcutter-ant/tests/data/validCommand.json", import.meta.url), "utf8")
+const validMolang = readFileSync(new URL("../../crates/leafcutter-ant/tests/data/validMolang.json", import.meta.url), "utf8")
 async function requestJsonData(dataPath) {
 	if (dataPath === "data/packages/minecraftBedrock/location/validCommand.json") return JSON.parse(validCommand)
+	if (dataPath === "data/packages/minecraftBedrock/location/validMolang.json") return JSON.parse(validMolang)
 	throw new Error(`no data at ${dataPath}`)
 }
 
