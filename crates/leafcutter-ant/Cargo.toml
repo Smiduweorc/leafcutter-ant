@@ -31,7 +31,7 @@ swc = "80"
 swc_common = "26"
 # Without inline-helpers swc imports its helpers from @swc/helpers, which no
 # host provides; @swc/wasm-web 1.6.5 wrote them into the output.
-swc_ecma_transforms_base = { version = "50", features = ["inline-helpers"] }
+swc_ecma_transforms_base = { version = "51", features = ["inline-helpers"] }
 # The syntax tree js-runtime's import/export rewrite walks, and the parser
 # options that pick JavaScript or TypeScript, at the versions swc depends
 # on. anyhow is the error type swc's handler API is written in.
