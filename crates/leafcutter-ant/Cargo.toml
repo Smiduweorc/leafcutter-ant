@@ -28,7 +28,7 @@ ryu-js = "1.0.3"
 # differently (enums, namespaces, class helpers). tests/swc-80.json records
 # each of those outputs, and the README lists the difference.
 swc = "80"
-swc_common = "26"
+swc_common = "27"
 # Without inline-helpers swc imports its helpers from @swc/helpers, which no
 # host provides; @swc/wasm-web 1.6.5 wrote them into the output.
 swc_ecma_transforms_base = { version = "50", features = ["inline-helpers"] }
