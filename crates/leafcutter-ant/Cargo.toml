@@ -36,7 +36,7 @@ swc_ecma_transforms_base = { version = "50", features = ["inline-helpers"] }
 # options that pick JavaScript or TypeScript, at the versions swc depends
 # on. anyhow is the error type swc's handler API is written in.
 swc_ecma_ast = "29"
-swc_ecma_parser = "46"
+swc_ecma_parser = "47"
 anyhow = "1"
 # swc's options are built from the same JSON the plugin hands @swc/wasm-web;
 # swc depends on serde_json already.
