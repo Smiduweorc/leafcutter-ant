@@ -35,7 +35,7 @@ swc_ecma_transforms_base = { version = "50", features = ["inline-helpers"] }
 # The syntax tree js-runtime's import/export rewrite walks, and the parser
 # options that pick JavaScript or TypeScript, at the versions swc depends
 # on. anyhow is the error type swc's handler API is written in.
-swc_ecma_ast = "29"
+swc_ecma_ast = "30"
 swc_ecma_parser = "46"
 anyhow = "1"
 # swc's options are built from the same JSON the plugin hands @swc/wasm-web;
