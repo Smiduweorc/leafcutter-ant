@@ -27,7 +27,7 @@ ryu-js = "1.0.3"
 # @swc/wasm-web 1.6.5; this is a current swc, which prints some files
 # differently (enums, namespaces, class helpers). tests/swc-80.json records
 # each of those outputs, and the README lists the difference.
-swc = "80"
+swc = "81"
 swc_common = "26"
 # Without inline-helpers swc imports its helpers from @swc/helpers, which no
 # host provides; @swc/wasm-web 1.6.5 wrote them into the output.
